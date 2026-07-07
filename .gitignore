@@ -1,0 +1,39 @@
+# Python runtime/cache files
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local virtual environments
+.venv/
+venv/
+env/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# IDE/editor metadata
+.idea/
+.vscode/
+
+# Local agent/runtime metadata
+.agents/
+
+# Logs
+logs/
+*.log
+
+# Generated vector/BM25/RAG storage
+storage/
+
+# Local model weights and downloaded model assets
+model/embeddingmodels/
+
+# OS files
+.DS_Store
+Thumbs.db

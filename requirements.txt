@@ -1,0 +1,25 @@
+# Core app and LLM stack (pinned for reproducible one-click setup)
+streamlit==1.45.1
+langchain==1.2.10
+langchain-core==1.4.8
+langchain-community==0.4.1
+langchain-chroma==1.1.0
+langchain-text-splitters==1.1.1
+langchain-classic==1.0.2
+langgraph==1.0.10
+langgraph-prebuilt==1.0.8
+packaging==24.2
+tokenizers==0.22.2
+
+# Data/config and model provider dependencies
+PyYAML==6.0.2
+dashscope==1.25.13
+chromadb==1.5.4
+pypdf==6.8.0
+
+langchain-openai==1.1.10
+python-dotenv
+langchain-huggingface==1.2.1
+sentence-transformers
+jieba==0.42.1
+rank-bm25==0.2.2

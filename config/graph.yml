@@ -1,0 +1,47 @@
+data_path: data/recipes
+
+database: neo4j
+
+ingredient_section_titles:
+  - 食材
+  - 用料
+  - 原料
+  - 材料
+  - 配料
+  - 主料
+  - 辅料
+  - 调料
+  - 必需原料
+  - 必备原料
+  - 必备原料和工具
+
+amount_section_titles:
+  - 计算
+  - 用量
+  - 配比
+  - 配方
+  - 分量
+
+tool_section_titles:
+  - 工具
+  - 厨具
+  - 烹饪工具
+  - 所需工具
+  - 必备工具
+  - 必备原料和工具
+
+step_section_titles:
+  - 步骤
+  - 做法
+  - 制作步骤
+  - 烹饪步骤
+  - 操作步骤
+  - 操作
+
+extra_section_titles:
+  - 附加内容
+  - 小贴士
+  - 备注
+  - 注意事项
+
+batch_size: 50
