@@ -595,6 +595,12 @@ log_before_model
 
 ---
 
+## 改进点
+
+1. 引入 Query Rewriting 机制，对用户原始问题进行意图补全、关键词规范化和检索友好化改写，以提升复杂问法下的召回稳定性。
+2. 接入 MCP 协议，对 Agent 工具调用接口进行统一封装，降低不同工具之间的参数格式差异，提升工具扩展与维护的一致性。
+3. 增强图谱上下文补全能力，在当前候选节点的基础上引入一跳邻居关系信息，为混合检索和最终回答提供更完整的结构化依据。
+
 ## 参考
 
 本项目仅供学习与参考使用。感谢[zhisaotong-Agent](https://github.com/bamboo-moon/zhisaotong-Agent)的代码框架以及优秀的rag教程项目[all-in-rag](https://github.com/datawhalechina/all-in-rag)。
