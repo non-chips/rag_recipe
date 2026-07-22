@@ -19,7 +19,7 @@
 | 12 | DONE | `6f8dc79` | 指定测试：8 passed；相邻层回归：29 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 13；营养服务、专家与 JSON 报告已提交 |
 | 13 | DONE | `af4a760` | 指定测试：12 passed；PowerShell 环境检查：通过；相邻层回归：28 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 14；FastAPI + SSE 与可替换 Streamlit 前端已提交 |
 | 14 | BLOCKED | 未提交 | 指定测试：5 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 反馈实现已完成白名单内部分；默认 API 仍需在静态主路由中注册，但 `recipe_assistant/api/router.py` 不在 Task 14 允许修改范围内 |
-| 15 | TODO |  |  |  |
+| 15 | IN_PROGRESS | 未提交 | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 候选评分、SIGNAL 持久化与 PENDING_REVIEW 去重已完成，等待人工验收；未实现审批或自动修复 |
 | 16 | TODO |  |  |  |
 | 17 | TODO |  |  |  |
 | 18 | TODO |  |  |  |
