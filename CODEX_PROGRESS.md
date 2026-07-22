@@ -12,8 +12,8 @@
 | 05 | DONE | `3e7fe82` | 指定测试：9 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 06；Tool Registry 与权限治理已提交 |
 | 06 | DONE | `e4548f3` | 指定测试：7 passed（33 条样例）；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 07；业务路由与 SIMPLE 快速路径已提交 |
 | 07 | DONE | `d8481b5` | 指定测试：6 passed；Alembic upgrade/check 通过；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 08；SQLite 数据层与迁移已提交 |
-| 08 | IN_PROGRESS | 未提交 | 指定测试：6 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；统一生命周期可运行，未实现 Coordinator、专家或 API |
-| 09 | TODO |  |  |  |
+| 08 | DONE | `97dc1c6` | 指定测试：6 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 09；统一生命周期已提交 |
+| 09 | IN_PROGRESS | 未提交 | 指定测试：9 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；仅使用 Fake Expert 验证，未实现三个领域专家 |
 | 10 | TODO |  |  |  |
 | 11 | TODO |  |  |  |
 | 12 | TODO |  |  |  |
