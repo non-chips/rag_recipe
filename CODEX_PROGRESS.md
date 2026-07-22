@@ -20,8 +20,8 @@
 | 13 | DONE | `af4a760` | 指定测试：12 passed；PowerShell 环境检查：通过；相邻层回归：28 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 14；FastAPI + SSE 与可替换 Streamlit 前端已提交 |
 | 14 | BLOCKED | 未提交 | 指定测试：5 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 反馈实现已完成白名单内部分；默认 API 仍需在静态主路由中注册，但 `recipe_assistant/api/router.py` 不在 Task 14 允许修改范围内 |
 | 15 | DONE | `02cf539` | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 16；规则型弱信号、候选评分与去重已提交 |
-| 16 | BLOCKED | 未提交 | 指定测试：10 passed；完整回归：125 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 白名单内审批链路已完成；默认 API 仍需在静态主路由中注册 `admin_bad_cases`，但 `recipe_assistant/api/router.py` 不在 Task 16 允许修改范围内 |
-| 17 | TODO |  |  |  |
+| 16 | DONE | `d99ad5c` | 指定测试：10 passed；完整回归：125 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 用户已明确要求进入 Task 17；根因建议、审批审计、状态机和回归草稿已提交；默认管理路由注册风险保留 |
+| 17 | IN_PROGRESS | 未提交 | 指定测试：10 passed；限定 Ruff：通过 | Skill frontmatter、Route/信号/风险选择、四项基础行为 Skill 与 Prompt 名称/版本记录已完成，等待人工验收 |
 | 18 | TODO |  |  |  |
 | 19 | TODO |  |  |  |
 
