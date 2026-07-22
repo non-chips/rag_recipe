@@ -21,8 +21,8 @@
 | 14 | BLOCKED | 未提交 | 指定测试：5 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 反馈实现已完成白名单内部分；默认 API 仍需在静态主路由中注册，但 `recipe_assistant/api/router.py` 不在 Task 14 允许修改范围内 |
 | 15 | DONE | `02cf539` | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 16；规则型弱信号、候选评分与去重已提交 |
 | 16 | DONE | `d99ad5c` | 指定测试：10 passed；完整回归：125 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 用户已明确要求进入 Task 17；根因建议、审批审计、状态机和回归草稿已提交；默认管理路由注册风险保留 |
-| 17 | IN_PROGRESS | 未提交 | 指定测试：10 passed；限定 Ruff：通过 | Skill frontmatter、Route/信号/风险选择、四项基础行为 Skill 与 Prompt 名称/版本记录已完成，等待人工验收 |
-| 18 | TODO |  |  |  |
+| 17 | DONE | `591cf44` | 指定测试：10 passed；完整回归：135 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 18；Skill Registry、基础行为 Skill 和编写规范已提交 |
+| 18 | IN_PROGRESS | 未提交 | 指定测试：6 passed；限定 Ruff：通过 | 四项高层 MCP Tool、服务语义一致性、可信用户注入和关闭时零资源初始化已完成，等待人工验收 |
 | 19 | TODO |  |  |  |
 
 状态只允许：`TODO`、`IN_PROGRESS`、`BLOCKED`、`DONE`。
