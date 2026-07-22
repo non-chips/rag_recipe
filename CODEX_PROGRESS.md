@@ -22,8 +22,8 @@
 | 15 | DONE | `02cf539` | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 16；规则型弱信号、候选评分与去重已提交 |
 | 16 | DONE | `d99ad5c` | 指定测试：10 passed；完整回归：125 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 用户已明确要求进入 Task 17；根因建议、审批审计、状态机和回归草稿已提交；默认管理路由注册风险保留 |
 | 17 | DONE | `591cf44` | 指定测试：10 passed；完整回归：135 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 18；Skill Registry、基础行为 Skill 和编写规范已提交 |
-| 18 | IN_PROGRESS | 未提交 | 指定测试：6 passed；限定 Ruff：通过 | 四项高层 MCP Tool、服务语义一致性、可信用户注入和关闭时零资源初始化已完成，等待人工验收 |
-| 19 | TODO |  |  |  |
+| 18 | DONE | `fde9f1d` | 指定测试：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 19；四项高层 MCP Tool、服务语义一致性、可信用户注入和关闭时零资源初始化已提交 |
+| 19 | DONE | 未提交 | 离线评测：41/41；完整回归：141 passed；Ruff：通过；Windows API/Streamlit 冒烟：通过 | 旧入口仍有调用，未删除；默认反馈/管理路由未注册的发布风险保留并写入最终迁移报告 |
 
 状态只允许：`TODO`、`IN_PROGRESS`、`BLOCKED`、`DONE`。
 

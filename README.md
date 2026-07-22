@@ -1,3 +1,32 @@
+# 智能食谱助手：当前运行说明
+
+> 推荐使用 FastAPI + 可替换 Streamlit 前端。本文后半部分的
+> `streamlit run app.py` 属于旧版直连 Agent 入口，已弃用且仅用于兼容。
+> 当前源码架构与已知限制见 `docs/current_architecture.md`，迁移门禁见
+> `docs/final_migration_report.md`。
+
+## Windows 11 当前启动方式（无 Docker）
+
+```powershell
+$env:PROJECT_PYTHON = "D:\Anaconda\envs\rag\python.exe"  # 按本机路径调整
+powershell.exe -ExecutionPolicy Bypass -File scripts\check_environment.ps1
+powershell.exe -ExecutionPolicy Bypass -File scripts\start_api.ps1
+```
+
+另开一个 PowerShell：
+
+```powershell
+$env:PROJECT_PYTHON = "D:\Anaconda\envs\rag\python.exe"
+powershell.exe -ExecutionPolicy Bypass -File scripts\start_streamlit.ps1
+```
+
+自动冒烟使用 `scripts/smoke_windows.ps1`；完整离线业务评测使用
+`python scripts/run_evaluation.py`。默认 API 尚未注册反馈和 Bad Case 管理路由，详见迁移报告。
+
+---
+
+# 旧版说明（兼容资料）
+
 # 智能菜谱推荐助手
 
 > 基于 LangChain Agent + GraphRAG 的智能菜谱问答与推荐系统

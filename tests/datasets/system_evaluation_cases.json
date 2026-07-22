@@ -1,0 +1,105 @@
+{
+  "retrieval": [
+    {
+      "id": "retrieval-hybrid-success",
+      "strategy": "advanced_hybrid",
+      "failed_sources": [],
+      "expected_recipe_ids": ["recipe-tomato-egg"],
+      "expected_fallback": false
+    },
+    {
+      "id": "retrieval-vector-degrade",
+      "strategy": "advanced_hybrid",
+      "failed_sources": ["graph", "bm25"],
+      "expected_recipe_ids": ["recipe-tomato-egg"],
+      "expected_fallback": true
+    },
+    {
+      "id": "retrieval-bm25-only",
+      "strategy": "bm25_keyword",
+      "failed_sources": [],
+      "expected_recipe_ids": ["recipe-tomato-egg"],
+      "expected_fallback": false
+    }
+  ],
+  "recommendation": [
+    {
+      "id": "recommendation-hard-filter-and-rank",
+      "constraints": {
+        "available_ingredients": ["tomato", "egg"],
+        "excluded_ingredients": ["peanut"],
+        "available_tools": ["wok"],
+        "max_time_minutes": 20
+      },
+      "preferences": {"preferred_cuisines": ["home"]},
+      "candidates": [
+        {
+          "recipe_id": "safe-fast",
+          "recipe_name": "Tomato Egg",
+          "ingredients": ["tomato", "egg"],
+          "tools": ["wok"],
+          "cook_time_minutes": 12,
+          "category": "home",
+          "source_path": "recipes/safe-fast.md",
+          "evidence": "verified recipe evidence",
+          "retrieval_score": 0.5
+        },
+        {
+          "recipe_id": "allergen",
+          "recipe_name": "Peanut Salad",
+          "ingredients": ["peanut"],
+          "tools": ["wok"],
+          "cook_time_minutes": 8,
+          "category": "home",
+          "source_path": "recipes/allergen.md",
+          "evidence": "verified recipe evidence",
+          "retrieval_score": 0.9
+        }
+      ],
+      "expected_accepted": ["safe-fast"],
+      "expected_top": "safe-fast"
+    }
+  ],
+  "nutrition": [
+    {
+      "id": "nutrition-serving-and-coverage",
+      "catalog": [
+        {
+          "recipe_id": "nutrition-r1",
+          "serving_size": 2,
+          "calories_kcal": 400,
+          "protein_g": 20,
+          "food_categories": ["vegetable"],
+          "source": "task19-fixture-v1",
+          "quality": "VERIFIED",
+          "calculation_version": "v1"
+        }
+      ],
+      "meals": [
+        {"recipe_id": "nutrition-r1", "servings": 1}
+      ],
+      "expected_calories": 200,
+      "expected_coverage": 1.0
+    },
+    {
+      "id": "nutrition-missing-data-degrades",
+      "catalog": [
+        {
+          "recipe_id": "nutrition-known",
+          "serving_size": 1,
+          "calories_kcal": 300,
+          "food_categories": ["grain"],
+          "source": "task19-fixture-v1",
+          "quality": "CALCULATED",
+          "calculation_version": "v1"
+        }
+      ],
+      "meals": [
+        {"recipe_id": "nutrition-known", "servings": 1},
+        {"recipe_id": "nutrition-unknown", "servings": 1}
+      ],
+      "expected_calories": 300,
+      "expected_coverage": 0.5
+    }
+  ]
+}
