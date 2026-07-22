@@ -22,7 +22,7 @@ def main() -> None:
     for query in queries:
         print("=" * 60)
         print(query)
-        print(json.dumps(router.route(query, use_llm=False), ensure_ascii=False, indent=2))
+        print(json.dumps(router.route(query, mode="rule"), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

@@ -7,6 +7,7 @@ class GraphRecipeRetriever:
     def __init__(self) -> None:
         self.client = Neo4jClient()
 
+    # 统计图谱数据节点
     def get_graph_statistics(self) -> dict:
         query = """
         MATCH (r:Recipe)
@@ -33,6 +34,7 @@ class GraphRecipeRetriever:
         rows = self.client.execute_read(query)
         return rows[0] if rows else {}
 
+    # 根据recipe_name获取菜谱的原料、工具和步骤信息
     def get_recipe_ingredients(
         self,
         recipe_name: str,
@@ -375,6 +377,7 @@ class GraphRecipeRetriever:
 
         return documents
 
+    # 为混合检索生成recipe_id和返回上下文
     def hybrid_graph_retrieve(
         self,
         query: str,

@@ -601,6 +601,25 @@ log_before_model
 2. 接入 MCP 协议，对 Agent 工具调用接口进行统一封装，降低不同工具之间的参数格式差异，提升工具扩展与维护的一致性。
 3. 增强图谱上下文补全能力，在当前候选节点的基础上引入一跳邻居关系信息，为混合检索和最终回答提供更完整的结构化依据。
 4. 增加 RAG 评估模块
+5. 增加长短期记忆管理模块
+
+## 离线基线测试
+
+安装开发依赖：
+
+```powershell
+python -m pip install pytest==8.4.1 ruff==0.12.5
+```
+
+运行 Task 01 的离线回归测试与静态检查：
+
+```powershell
+python -m pytest tests/baseline -q
+python -m ruff check .
+```
+
+上述基线测试使用 Fake ChatModel、Retriever、Weather 和 Neo4j 替身，默认不访问
+DeepSeek、高德、Neo4j 或其他外部网络服务。
 
 ## 参考
 

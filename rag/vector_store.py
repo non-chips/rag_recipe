@@ -20,7 +20,7 @@ from utils.file_handler import (
 from utils.logger_handler import logger
 from utils.path_tool import get_abs_path
 
-
+# 父子块检索类
 class ParentChildRetriever:
     """Retrieve small vector-matched child chunks, then return parent chunks."""
 
@@ -190,6 +190,7 @@ class VectorStoreService:
 
         return []
 
+    #构建父块和子块
     def _build_parent_child_documents(
         self,
         documents: list[Document],

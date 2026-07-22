@@ -1,4 +1,4 @@
-# bm25检索模块
+# bm25检索模块（jieba中文分词）
 
 import jieba
 from rank_bm25 import BM25Okapi
@@ -21,6 +21,7 @@ class BM25RecipeRetriever:
             if token.strip()
         ]
 
+    # 从图数据谱中读取完整菜谱文档
     def _build_index(self) -> None:
         graph_data = GraphDataPreparationModule()
 
@@ -49,7 +50,8 @@ class BM25RecipeRetriever:
         scores = self.bm25.get_scores(query_tokens)
 
         results: list[tuple[Document, float]] = []
-
+        
+        # 支持按候选id过滤
         allowed_ids = set(recipe_ids or [])
 
         for doc, score in zip(self.documents, scores):

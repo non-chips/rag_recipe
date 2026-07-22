@@ -55,6 +55,7 @@ class HybridRetrievalResult:
 
 class HybridRagService:
     def __init__(self) -> None:
+        # 初始化检索服务
         self.graph_retriever = GraphRecipeRetriever()
         self.vector_store = VectorStoreService()
         self.retriever = self.vector_store.get_retriever()
@@ -71,6 +72,8 @@ class HybridRagService:
         recipe_names: list[str] | None = None,
         candidate_limit: int | None = None,
     ) -> HybridRetrievalResult:
+        
+        # 图谱检索候选
         graph_result = self.graph_retriever.hybrid_graph_retrieve(
             query=query,
             ingredients=ingredients,
@@ -84,10 +87,13 @@ class HybridRagService:
         candidate_recipe_ids = graph_result["candidate_recipe_ids"]
         graph_context_docs = graph_result["graph_context_docs"]
 
+        # 向量检索候选
         chroma_docs = self.retriever.invoke(
             query,
             parent_k=chroma_conf.get("chroma_k", 20),
         )
+
+        # BM25 检索候选
         bm25_results = self.bm25_retriever.search(
             query=query,
             k=chroma_conf.get("bm25_k", 20),
@@ -96,7 +102,8 @@ class HybridRagService:
             doc
             for doc, _score in bm25_results
         ]
-
+        
+        # RRF 融合三路检索结果
         fused_results = self._fuse_three_way(
             graph_context_docs=graph_context_docs,
             chroma_docs=chroma_docs,
@@ -183,6 +190,7 @@ class HybridRagService:
             candidate_recipe_ids=candidate_recipe_ids,
         )
 
+        # RRF 三路融合
         return rrf_fusion(
             ranked_lists=[
                 graph_ranked,
@@ -219,6 +227,7 @@ class HybridRagService:
             seen_recipe_ids.add(str(recipe_id))
             rank = len(ranked_docs) + 1
 
+            # 结合图检索的recipe_id进行简单的rerank
             if source != "graph" and recipe_id in candidate_set:
                 rank = max(1, rank - 3)
 

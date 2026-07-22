@@ -275,17 +275,97 @@ def rag_summarize(query: str) -> str:
     description=(
         "智能查询路由工具。输入用户原始菜谱问题，返回 JSON 路由决策，"
         "包括 strategy、query_type、complexity_score、relation_density_score、"
-        "是否需要多跳推理、因果分析、对比分析，以及推荐下一步应调用的检索策略。"
+        "推理需求、因果分析、对比分析，以及推荐下一步应调用的检索策略。"
         "当问题复杂、包含多个条件、需要推荐/对比/解释，或不确定该使用哪个检索工具时，应先调用本工具。"
     )
 )
 def route_recipe_query(query: str) -> str:
-    result = query_router.route(query=query, use_llm=True)
+    result = query_router.route(query=query, mode="auto")
     return json.dumps(
         result,
         ensure_ascii=False,
         indent=2,
     )
+
+
+@tool(
+    description=(
+        "智能菜谱查询统一入口。该工具会先执行 route_recipe_query 路由分析，"
+        "从 graph_search、vector_search、hybrid_search 三种检索方法中选择一种，"
+        "再自动调用对应检索流程并返回答案。普通问答、图谱事实查询、复杂推荐和对比问题都应优先调用本工具。"
+    )
+)
+def smart_recipe_query(query: str) -> str:
+    route_result = query_router.route(query=query, mode="auto")
+    retrieval_method = route_result.get("retrieval_method") or route_result.get("strategy")
+
+    logger.info(
+        "[smart_recipe_query] route=%s query_type=%s complexity=%s relation_density=%s",
+        retrieval_method,
+        route_result.get("query_type"),
+        route_result.get("complexity_score"),
+        route_result.get("relation_density_score"),
+    )
+
+    if retrieval_method == "graph_search":
+        answer = _execute_graph_route(query, route_result)
+    elif retrieval_method == "vector_search":
+        answer = rag.rag_summarize(query)
+    else:
+        service = HybridRagService()
+        try:
+            answer = service.hybrid_summarize(query)
+        finally:
+            service.close()
+
+    # 路由信息只写入日志，工具对 Agent 只返回可直接组织回答的结果。
+    return answer
+
+
+def _execute_graph_route(query: str, route_result: dict) -> str:
+    retriever = GraphRecipeRetriever()
+
+    try:
+        if route_result.get("query_type") == "structured_fact":
+            recipe_name = _extract_recipe_name_for_graph_query(query)
+            if "工具" in query:
+                result = retriever.get_recipe_tools(recipe_name)
+            elif "步骤" in query:
+                result = retriever.get_recipe_steps(recipe_name)
+            else:
+                result = retriever.get_recipe_ingredients(recipe_name)
+        elif route_result.get("include_ingredients"):
+            result = retriever.search_recipes_by_ingredients(
+                ingredients=route_result["include_ingredients"],
+                limit=20,
+            )
+        elif route_result.get("tool"):
+            result = retriever.search_recipes_by_tool(
+                tool=route_result["tool"],
+                limit=20,
+            )
+        elif route_result.get("category"):
+            result = retriever.search_recipes_by_category(
+                category=route_result["category"],
+                limit=20,
+            )
+        else:
+            result = retriever.search_recipe_candidates(limit=20)
+
+        return json.dumps(
+            result,
+            ensure_ascii=False,
+            indent=2,
+        )
+    finally:
+        retriever.close()
+
+
+def _extract_recipe_name_for_graph_query(query: str) -> str:
+    query = query.strip()
+    for marker in ["需要哪些", "需要什么", "有哪些", "的食材", "的工具", "的步骤"]:
+        query = query.replace(marker, " ")
+    return query.strip(" ？?，,。")
 
 
 @tool(

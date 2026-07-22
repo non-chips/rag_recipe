@@ -1,6 +1,6 @@
 from graph.neo4j_client import Neo4jClient
 
-
+# 创建图谱关键约束
 SCHEMA_QUERIES = [
     """
     CREATE CONSTRAINT recipe_node_id_unique IF NOT EXISTS

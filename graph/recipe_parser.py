@@ -38,7 +38,7 @@ class RecipeGraphData:
     tools: list[ToolData]
     steps: list[StepData]
 
-
+# 根据关键词写入节点
 INGREDIENT_TITLES = [
     "食材",
     "用料",
