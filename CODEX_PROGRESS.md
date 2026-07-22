@@ -16,8 +16,8 @@
 | 09 | DONE | `c582a53` | 指定测试：9 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 10；协作协议与确定性编排已提交 |
 | 10 | DONE | `b3450ca` | 指定测试：5 passed；相邻层回归：26 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 11；菜谱知识专家已提交 |
 | 11 | DONE | `287e837` | 指定测试：9 passed；相邻层回归：27 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 12；推荐专家与硬约束服务已提交 |
-| 12 | IN_PROGRESS | 未提交 | 指定测试：8 passed；相邻层回归：29 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；默认仅聚合 CONSUME，低覆盖率降级为类别与多样性报告 |
-| 13 | TODO |  |  |  |
+| 12 | DONE | `6f8dc79` | 指定测试：8 passed；相邻层回归：29 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 13；营养服务、专家与 JSON 报告已提交 |
+| 13 | IN_PROGRESS | 未提交 | 指定测试：12 passed；PowerShell 环境检查：通过；相邻层回归：28 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；Streamlit 仅消费 HTTP/SSE，旧 app.py 保留 |
 | 14 | TODO |  |  |  |
 | 15 | TODO |  |  |  |
 | 16 | TODO |  |  |  |
