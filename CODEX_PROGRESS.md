@@ -19,8 +19,8 @@
 | 12 | DONE | `6f8dc79` | 指定测试：8 passed；相邻层回归：29 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 13；营养服务、专家与 JSON 报告已提交 |
 | 13 | DONE | `af4a760` | 指定测试：12 passed；PowerShell 环境检查：通过；相邻层回归：28 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 14；FastAPI + SSE 与可替换 Streamlit 前端已提交 |
 | 14 | BLOCKED | 未提交 | 指定测试：5 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 反馈实现已完成白名单内部分；默认 API 仍需在静态主路由中注册，但 `recipe_assistant/api/router.py` 不在 Task 14 允许修改范围内 |
-| 15 | IN_PROGRESS | 未提交 | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 候选评分、SIGNAL 持久化与 PENDING_REVIEW 去重已完成，等待人工验收；未实现审批或自动修复 |
-| 16 | TODO |  |  |  |
+| 15 | DONE | `02cf539` | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 16；规则型弱信号、候选评分与去重已提交 |
+| 16 | BLOCKED | 未提交 | 指定测试：10 passed；完整回归：125 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 白名单内审批链路已完成；默认 API 仍需在静态主路由中注册 `admin_bad_cases`，但 `recipe_assistant/api/router.py` 不在 Task 16 允许修改范围内 |
 | 17 | TODO |  |  |  |
 | 18 | TODO |  |  |  |
 | 19 | TODO |  |  |  |
@@ -30,6 +30,7 @@
 ## 当前阻塞
 
 - Task 14 的反馈路由已定义，但现有 Task 13 主路由采用静态注册；需获准修改白名单外的 `recipe_assistant/api/router.py` 后才能让默认 API 与前端访问该端点。
+- Task 16 的管理路由同样已定义并通过独立集成测试，但需获准修改 `recipe_assistant/api/router.py` 后才能接入默认 API Runtime。
 
 ## 关键架构决策
 
