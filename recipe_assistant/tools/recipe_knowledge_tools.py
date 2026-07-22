@@ -1,4 +1,4 @@
-"""Thin local tools backed by the retrieval service."""
+"""Thin recipe-knowledge tools backed by the retrieval service."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ def create_recipe_knowledge_tool(retrieval_service: RetrievalService) -> LocalTo
 
     return LocalTool(
         name="search_recipe_knowledge",
-        description="检索菜谱知识、食材、步骤和相关依据。",
+        description="检索菜谱食材、步骤、厨具、比较与替换所需的知识证据。",
         args_schema=SearchRecipeKnowledgeInput,
         handler=search,
         policy=ToolPolicy(risk_level=ToolRiskLevel.READ_ONLY),
