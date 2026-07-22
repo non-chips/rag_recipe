@@ -1,4 +1,4 @@
-"""Recommendation tool adapters configured with future service handlers."""
+"""Recommendation and weather service adapters."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from recipe_assistant.services.recommendation import RecommendationService
+from recipe_assistant.services.weather import WeatherService
 from recipe_assistant.tools.context import ToolContext
 from recipe_assistant.tools.governance import ToolPolicy, ToolRiskLevel
 from recipe_assistant.tools.registry import LocalTool
@@ -35,7 +37,7 @@ def create_recommendation_tools(
         tools.append(
             LocalTool(
                 name="recommend_recipes",
-                description="根据用户明确提供的约束推荐菜谱。",
+                description="从检索结果召回菜谱候选，不生成知识库外菜谱。",
                 args_schema=RecommendRecipesInput,
                 handler=recommend,
                 policy=ToolPolicy(
@@ -48,7 +50,7 @@ def create_recommendation_tools(
         tools.append(
             LocalTool(
                 name="get_current_weather",
-                description="获取指定城市的当前天气。",
+                description="获取指定城市的当前天气；失败时返回明确降级结果。",
                 args_schema=CurrentWeatherInput,
                 handler=weather,
                 policy=ToolPolicy(risk_level=ToolRiskLevel.READ_ONLY),
@@ -82,3 +84,29 @@ def create_recommendation_tools(
             )
         )
     return tools
+
+
+def create_recommendation_service_tools(
+    recommendation_service: RecommendationService,
+    weather_service: WeatherService | None = None,
+) -> list[LocalTool]:
+    """Adapt typed services to the existing role-scoped tool contracts."""
+
+    def recommend(arguments: BaseModel, context: ToolContext) -> dict[str, Any]:
+        del context
+        parsed = RecommendRecipesInput.model_validate(arguments)
+        return recommendation_service.recall(
+            parsed.query,
+            top_k=parsed.top_k,
+        ).model_dump(mode="json")
+
+    def weather(arguments: BaseModel, context: ToolContext) -> dict[str, Any]:
+        del context
+        parsed = CurrentWeatherInput.model_validate(arguments)
+        assert weather_service is not None
+        return weather_service.get_current(parsed.city).model_dump(mode="json")
+
+    return create_recommendation_tools(
+        recommend=recommend,
+        weather=weather if weather_service is not None else None,
+    )

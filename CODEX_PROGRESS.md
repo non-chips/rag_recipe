@@ -14,8 +14,8 @@
 | 07 | DONE | `d8481b5` | 指定测试：6 passed；Alembic upgrade/check 通过；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 08；SQLite 数据层与迁移已提交 |
 | 08 | DONE | `97dc1c6` | 指定测试：6 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 09；统一生命周期已提交 |
 | 09 | DONE | `c582a53` | 指定测试：9 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 10；协作协议与确定性编排已提交 |
-| 10 | IN_PROGRESS | 未提交 | 指定测试：5 passed；相邻层回归：26 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；仅实现菜谱知识专家，未实现推荐或营养专家 |
-| 11 | TODO |  |  |  |
+| 10 | DONE | `b3450ca` | 指定测试：5 passed；相邻层回归：26 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 11；菜谱知识专家已提交 |
+| 11 | IN_PROGRESS | 未提交 | 指定测试：9 passed；相邻层回归：27 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；天气可降级，硬约束由确定性服务执行 |
 | 12 | TODO |  |  |  |
 | 13 | TODO |  |  |  |
 | 14 | TODO |  |  |  |
