@@ -8,8 +8,8 @@
 | 01 | DONE | 未提交 | `pytest tests/baseline -q`：6 passed；`ruff check .`：通过 | 用户已明确要求进入 Task 02；外部服务测试均使用离线 Fake |
 | 02 | DONE | 未提交 | 指定单元测试：8 passed；限定 Ruff：通过；Task 01 基线：6 passed | 用户已明确要求进入 Task 03；新容器尚未接入旧运行链路，符合本任务停止条件 |
 | 03 | DONE | `d8c8ef3` | 指定单元测试：9 passed | 用户已明确要求进入 Task 04；数据契约已提交 |
-| 04 | IN_PROGRESS | 未提交 | 指定测试：8 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；未创建 Tool Registry，符合停止条件 |
-| 05 | TODO |  |  |  |
+| 04 | DONE | `d45da70` | 指定测试：8 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 05；RetrievalService 解耦已提交 |
+| 05 | IN_PROGRESS | 未提交 | 指定测试：9 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 交付完成，等待人工验收；仅建立 Tool Adapter 与权限，不创建专家或运行时 |
 | 06 | TODO |  |  |  |
 | 07 | TODO |  |  |  |
 | 08 | TODO |  |  |  |
