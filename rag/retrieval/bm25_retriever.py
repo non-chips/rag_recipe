@@ -1,17 +1,21 @@
-# bm25检索模块（jieba中文分词）
-
+from langchain_core.documents import Document
 import jieba
 from rank_bm25 import BM25Okapi
-from langchain_core.documents import Document
 
-from graph.graph_data_preparation import GraphDataPreparationModule
+from rag.ingestion.metadata_normalizer import MissingRecipeIdPolicy, normalize_metadata
+from rag.retrieval.document_source import MarkdownRecipeDocumentSource, RecipeDocumentSource
 
 
 class BM25RecipeRetriever:
-    def __init__(self) -> None:
+    """Reusable BM25 index over an injectable recipe document source."""
+
+    def __init__(self, document_source: RecipeDocumentSource | None = None) -> None:
+        self.document_source = document_source or MarkdownRecipeDocumentSource()
         self.documents: list[Document] = []
         self.tokenized_corpus: list[list[str]] = []
         self.bm25: BM25Okapi | None = None
+        self.normalization_warnings: list[str] = []
+        self.index_build_count = 0
         self._build_index()
 
     def _tokenize(self, text: str) -> list[str]:
@@ -21,21 +25,29 @@ class BM25RecipeRetriever:
             if token.strip()
         ]
 
-    # 从图数据谱中读取完整菜谱文档
     def _build_index(self) -> None:
-        graph_data = GraphDataPreparationModule()
+        """Build one index from the configured source snapshot."""
 
-        try:
-            self.documents = graph_data.load_recipe_documents()
-        finally:
-            graph_data.close()
+        self.index_build_count += 1
+        self.documents = []
+        self.normalization_warnings = []
+        for document in self.document_source.load_documents():
+            outcome = normalize_metadata(
+                document.metadata,
+                missing_recipe_id=MissingRecipeIdPolicy.SKIP,
+            )
+            self.normalization_warnings.extend(outcome.warnings)
+            if outcome.metadata is None:
+                continue
+            self.documents.append(
+                Document(page_content=document.page_content, metadata=outcome.metadata)
+            )
 
         self.tokenized_corpus = [
             self._tokenize(doc.page_content)
             for doc in self.documents
         ]
-
-        self.bm25 = BM25Okapi(self.tokenized_corpus)
+        self.bm25 = BM25Okapi(self.tokenized_corpus) if self.tokenized_corpus else None
 
     def search(
         self,
@@ -51,7 +63,6 @@ class BM25RecipeRetriever:
 
         results: list[tuple[Document, float]] = []
         
-        # 支持按候选id过滤
         allowed_ids = set(recipe_ids or [])
 
         for doc, score in zip(self.documents, scores):

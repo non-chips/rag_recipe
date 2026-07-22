@@ -4,6 +4,8 @@
 
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
+from recipe_assistant.schemas.retrieval import RetrievalRequest, RetrievalStrategy
+from recipe_assistant.services.retrieval import RetrievalService
 from rag.vector_store import VectorStoreService
 from utils.prompt_loader import load_rag_prompts
 from langchain_core.prompts import PromptTemplate
@@ -14,6 +16,11 @@ class RagSummarizeService(object):
     def __init__(self):
         self.vector_store = VectorStoreService()
         self.retriever = self.vector_store.get_retriever()
+        self.retrieval_service = RetrievalService(
+            graph_retriever=None,
+            vector_retriever=self.retriever,
+            bm25_retriever=None,
+        )
         self.prompt_text = load_rag_prompts()
         self.prompt_template = PromptTemplate.from_template(self.prompt_text)
         self.model = chat_model
@@ -24,7 +31,16 @@ class RagSummarizeService(object):
         return chain
 
     def retriever_docs(self, query: str) -> list[Document]:
-        return self.retriever.invoke(query)
+        result = self.retrieval_service.retrieve(
+            RetrievalRequest(
+                query=query,
+                strategy=RetrievalStrategy.VECTOR_ONLY,
+            )
+        )
+        return [
+            Document(page_content=hit.content, metadata=dict(hit.metadata))
+            for hit in result.hits
+        ]
 
     def rag_summarize(self, query: str) -> str:
 

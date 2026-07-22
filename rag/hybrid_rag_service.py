@@ -7,8 +7,10 @@ from langchain_core.prompts import PromptTemplate
 
 from graph.graph_retriever import GraphRecipeRetriever
 from rag.retrieval.bm25_retriever import BM25RecipeRetriever
-from rag.retrieval.fusion import FusedDocument, RankedDocument, rrf_fusion
+from rag.retrieval.fusion import FusedDocument
 from rag.vector_store import VectorStoreService
+from recipe_assistant.schemas.retrieval import RetrievalRequest, RetrievalStrategy
+from recipe_assistant.services.retrieval import RetrievalService
 from utils.config_handler import chroma_conf
 
 
@@ -60,6 +62,11 @@ class HybridRagService:
         self.vector_store = VectorStoreService()
         self.retriever = self.vector_store.get_retriever()
         self.bm25_retriever = BM25RecipeRetriever()
+        self.retrieval_service = RetrievalService(
+            graph_retriever=self.graph_retriever,
+            vector_retriever=self.retriever,
+            bm25_retriever=self.bm25_retriever,
+        )
         self.prompt_template = PromptTemplate.from_template(HYBRID_PROMPT)
         self.chain = None
 
@@ -72,66 +79,75 @@ class HybridRagService:
         recipe_names: list[str] | None = None,
         candidate_limit: int | None = None,
     ) -> HybridRetrievalResult:
-        
-        # 图谱检索候选
-        graph_result = self.graph_retriever.hybrid_graph_retrieve(
+        request = RetrievalRequest(
             query=query,
-            ingredients=ingredients,
-            tools=tools,
-            category=category,
-            recipe_names=recipe_names,
-            limit=candidate_limit or chroma_conf.get("hybrid_candidate_limit", 500),
+            strategy=RetrievalStrategy.ADVANCED_HYBRID,
+            include_ingredients=ingredients or [],
+            tools=tools or [],
+            categories=[category] if category else [],
+            recipe_names=recipe_names or [],
+            top_k=chroma_conf.get("k", 5),
+            candidate_k=candidate_limit or chroma_conf.get("chroma_k", 20),
         )
+        retrieval_result = self.retrieval_service.retrieve(request)
 
-        candidates = graph_result["candidates"]
-        candidate_recipe_ids = graph_result["candidate_recipe_ids"]
-        graph_context_docs = graph_result["graph_context_docs"]
+        text_docs: list[Document] = []
+        fused_results: list[FusedDocument] = []
+        for hit in retrieval_result.hits:
+            metadata = dict(hit.metadata)
+            metadata.setdefault("recipe_id", hit.recipe_id)
+            metadata.setdefault("recipe_name", hit.recipe_name)
+            metadata.setdefault("source_path", hit.source_path)
+            metadata["fusion_score"] = hit.fused_score
+            metadata["fusion_sources"] = hit.retrieval_sources
+            document = Document(page_content=hit.content, metadata=metadata)
+            text_docs.append(document)
+            fused_results.append(
+                FusedDocument(
+                    doc_id=hit.recipe_id,
+                    document=document,
+                    fused_score=hit.fused_score,
+                    sources=hit.retrieval_sources,
+                    recipe_id=hit.recipe_id,
+                    recipe_name=hit.recipe_name,
+                )
+            )
 
-        # 向量检索候选
-        chroma_docs = self.retriever.invoke(
-            query,
-            parent_k=chroma_conf.get("chroma_k", 20),
-        )
-
-        # BM25 检索候选
-        bm25_results = self.bm25_retriever.search(
-            query=query,
-            k=chroma_conf.get("bm25_k", 20),
-        )
-        bm25_docs = [
-            doc
-            for doc, _score in bm25_results
+        candidates = [
+            {
+                "recipe_id": row.get("recipe_id"),
+                "recipe_name": row.get("recipe_name"),
+            }
+            for row in retrieval_result.graph_evidence
+            if row.get("recipe_id")
         ]
-        
-        # RRF 融合三路检索结果
-        fused_results = self._fuse_three_way(
-            graph_context_docs=graph_context_docs,
-            chroma_docs=chroma_docs,
-            bm25_docs=bm25_docs,
-            candidate_recipe_ids=candidate_recipe_ids,
-        )
-
-        ranked_recipe_ids = [
-            item.recipe_id
-            for item in fused_results
-            if item.recipe_id
+        filters = {
+            "ingredients": ingredients or [],
+            "tools": tools or [],
+            "category": category,
+            "recipe_names": recipe_names or [],
+        }
+        graph_context_docs = [
+            Document(
+                page_content=self._format_graph_context([row]),
+                metadata={
+                    "recipe_id": row.get("recipe_id"),
+                    "node_id": row.get("recipe_id"),
+                    "recipe_name": row.get("recipe_name"),
+                    "source": row.get("source"),
+                    "source_path": row.get("source") or "",
+                    "doc_type": "graph_context",
+                },
+            )
+            for row in retrieval_result.graph_evidence
+            if row.get("recipe_id")
         ]
-        if not ranked_recipe_ids:
-            ranked_recipe_ids = candidate_recipe_ids[: chroma_conf.get("k", 5)]
-
-        graph_evidence = self.graph_retriever.get_recipe_evidence(ranked_recipe_ids)
-        text_docs = self._select_text_docs_for_fused_results(
-            fused_results=fused_results,
-            chroma_docs=chroma_docs,
-            bm25_docs=bm25_docs,
-            graph_context_docs=graph_context_docs,
-        )
 
         return HybridRetrievalResult(
             query=query,
-            filters=graph_result["filters"],
+            filters=filters,
             candidates=candidates,
-            graph_evidence=graph_evidence,
+            graph_evidence=retrieval_result.graph_evidence,
             text_docs=text_docs,
             graph_context_docs=graph_context_docs,
             fused_results=fused_results,
@@ -165,123 +181,7 @@ class HybridRagService:
         )
 
     def close(self) -> None:
-        self.graph_retriever.close()
-
-    def _fuse_three_way(
-        self,
-        graph_context_docs: list[Document],
-        chroma_docs: list[Document],
-        bm25_docs: list[Document],
-        candidate_recipe_ids: list[str],
-    ) -> list[FusedDocument]:
-        graph_ranked = self._to_ranked_documents(
-            docs=graph_context_docs,
-            source="graph",
-            candidate_recipe_ids=candidate_recipe_ids,
-        )
-        chroma_ranked = self._to_ranked_documents(
-            docs=chroma_docs,
-            source="chroma",
-            candidate_recipe_ids=candidate_recipe_ids,
-        )
-        bm25_ranked = self._to_ranked_documents(
-            docs=bm25_docs,
-            source="bm25",
-            candidate_recipe_ids=candidate_recipe_ids,
-        )
-
-        # RRF 三路融合
-        return rrf_fusion(
-            ranked_lists=[
-                graph_ranked,
-                chroma_ranked,
-                bm25_ranked,
-            ],
-            k=chroma_conf.get("rrf_k", 60),
-            top_k=chroma_conf.get("k", 5),
-            weights=chroma_conf.get(
-                "rrf_weights",
-                {
-                    "graph": 1.2,
-                    "chroma": 1.0,
-                    "bm25": 0.9,
-                },
-            ),
-        )
-
-    def _to_ranked_documents(
-        self,
-        docs: list[Document],
-        source: str,
-        candidate_recipe_ids: list[str],
-    ) -> list[RankedDocument]:
-        candidate_set = set(candidate_recipe_ids)
-        ranked_docs: list[RankedDocument] = []
-        seen_recipe_ids: set[str] = set()
-
-        for doc in docs:
-            recipe_id = doc.metadata.get("recipe_id") or doc.metadata.get("node_id")
-            if not recipe_id or recipe_id in seen_recipe_ids:
-                continue
-
-            seen_recipe_ids.add(str(recipe_id))
-            rank = len(ranked_docs) + 1
-
-            # 结合图检索的recipe_id进行简单的rerank
-            if source != "graph" and recipe_id in candidate_set:
-                rank = max(1, rank - 3)
-
-            ranked_docs.append(
-                RankedDocument(
-                    doc_id=str(recipe_id),
-                    document=doc,
-                    score=1.0 / rank,
-                    source=source,
-                    rank=rank,
-                    recipe_id=str(recipe_id),
-                    recipe_name=doc.metadata.get("recipe_name"),
-                )
-            )
-
-        return ranked_docs
-
-    def _select_text_docs_for_fused_results(
-        self,
-        fused_results: list[FusedDocument],
-        chroma_docs: list[Document],
-        bm25_docs: list[Document],
-        graph_context_docs: list[Document],
-    ) -> list[Document]:
-        chroma_by_recipe_id = self._first_doc_by_recipe_id(chroma_docs)
-        bm25_by_recipe_id = self._first_doc_by_recipe_id(bm25_docs)
-        graph_by_recipe_id = self._first_doc_by_recipe_id(graph_context_docs)
-
-        selected_docs: list[Document] = []
-        for item in fused_results:
-            if not item.recipe_id:
-                continue
-
-            doc = (
-                chroma_by_recipe_id.get(item.recipe_id)
-                or bm25_by_recipe_id.get(item.recipe_id)
-                or graph_by_recipe_id.get(item.recipe_id)
-            )
-            if doc:
-                doc.metadata["fusion_score"] = item.fused_score
-                doc.metadata["fusion_sources"] = item.sources
-                selected_docs.append(doc)
-
-        return selected_docs
-
-    def _first_doc_by_recipe_id(self, docs: list[Document]) -> dict[str, Document]:
-        doc_map: dict[str, Document] = {}
-
-        for doc in docs:
-            recipe_id = doc.metadata.get("recipe_id") or doc.metadata.get("node_id")
-            if recipe_id and str(recipe_id) not in doc_map:
-                doc_map[str(recipe_id)] = doc
-
-        return doc_map
+        self.retrieval_service.close()
 
     def _get_chain(self):
         if self.chain is None:

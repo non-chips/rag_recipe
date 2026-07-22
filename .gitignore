@@ -39,3 +39,5 @@ model/embeddingmodels/
 # OS files
 .DS_Store
 Thumbs.db
+
+Undo.md
