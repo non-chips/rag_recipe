@@ -1,0 +1,1386 @@
+{
+  "schema_version": 1,
+  "dataset": "tests/datasets/legacy_v2_parity_cases.json",
+  "methodology": {
+    "mode": "offline_contract_and_component_probe",
+    "legacy": "Actual LegacyReactAgentAdapter and RecipeQueryRouter(rule mode), with an offline stream agent replacing external LLM/tools.",
+    "v2": "Actual BusinessRouter and domain services with in-memory SQLite and deterministic retrieval/weather providers.",
+    "limitation": "This is a deterministic component/contract comparison, not a live DeepSeek, AMap, Chroma or Neo4j quality/performance benchmark."
+  },
+  "thresholds": {
+    "p0_pass_rate": 1.0,
+    "p1_pass_rate": 1.0,
+    "api_contract_pass_rate": 1.0,
+    "data_consistency_pass_rate": 1.0
+  },
+  "status": "BLOCKED",
+  "summary": {
+    "total": 19,
+    "passed": 16,
+    "failed": 3,
+    "by_severity": {
+      "P0": {
+        "total": 7,
+        "passed": 6,
+        "failed": 1,
+        "pass_rate": 0.8571428571428571
+      },
+      "P1": {
+        "total": 12,
+        "passed": 10,
+        "failed": 2,
+        "pass_rate": 0.8333333333333334
+      }
+    },
+    "by_category": {
+      "api_contract": {
+        "total": 3,
+        "passed": 1,
+        "failed": 2
+      },
+      "bad_case": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "data_consistency": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "degradation": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0
+      },
+      "feedback": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "hard_constraint": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "knowledge": {
+        "total": 2,
+        "passed": 2,
+        "failed": 0
+      },
+      "multi_turn_memory": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "nutrition": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "recommendation": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "runtime_wiring": {
+        "total": 1,
+        "passed": 0,
+        "failed": 1
+      },
+      "simple_chat": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "weather": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      }
+    },
+    "api_contract_pass_rate": 0.3333333333333333,
+    "data_consistency_pass_rate": 1.0
+  },
+  "blockers": [
+    {
+      "case_id": "api_feedback_001",
+      "severity": "P0",
+      "category": "api_contract",
+      "failures": [
+        "api_route_registered"
+      ]
+    },
+    {
+      "case_id": "api_bad_case_admin_001",
+      "severity": "P1",
+      "category": "api_contract",
+      "failures": [
+        "api_route_registered"
+      ]
+    },
+    {
+      "case_id": "default_runtime_001",
+      "severity": "P1",
+      "category": "runtime_wiring",
+      "failures": [
+        "default_runtime_is_v2"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "id": "greeting_001",
+      "category": "simple_chat",
+      "severity": "P1",
+      "input": "你好",
+      "probe": "chat",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "legacy_contract_executed": true,
+        "v2_has_explicit_owner": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "vector_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "route:vector_search"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-greeting_001": 1
+        },
+        "latency_ms": 0.12129999959142879
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "SIMPLE",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "SimpleChatService.respond": 1
+        },
+        "latency_ms": 0.30249999963416485
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "recipe_qa_001",
+      "category": "knowledge",
+      "severity": "P1",
+      "input": "宫保鸡丁怎么做？",
+      "probe": "chat",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "legacy_contract_executed": true,
+        "v2_has_explicit_owner": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "vector_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:vector_search"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-recipe_qa_001": 1
+        },
+        "latency_ms": 0.04810000064026099
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_KNOWLEDGE",
+        "experts": [
+          "recipe_knowledge_expert"
+        ],
+        "tools": [
+          "search_recipe_knowledge"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {},
+        "calls": {
+          "BusinessRouter.route": 1,
+          "RecipeAgentRuntime.run (direct probe)": 1
+        },
+        "latency_ms": 0.021099999685247894
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "recipe_fact_001",
+      "category": "knowledge",
+      "severity": "P1",
+      "input": "白灼虾需要哪些食材？",
+      "probe": "chat",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "legacy_contract_executed": true,
+        "v2_has_explicit_owner": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "graph_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:graph_search"
+        ],
+        "sources": [
+          "neo4j"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-recipe_fact_001": 1
+        },
+        "latency_ms": 0.04369999987829942
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_KNOWLEDGE",
+        "experts": [
+          "recipe_knowledge_expert"
+        ],
+        "tools": [
+          "search_recipe_knowledge"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {},
+        "calls": {
+          "BusinessRouter.route": 1,
+          "RecipeAgentRuntime.run (direct probe)": 1
+        },
+        "latency_ms": 0.017400000615452882
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "rec_001",
+      "category": "recommendation",
+      "severity": "P1",
+      "input": "我有番茄和鸡蛋，推荐一道晚饭",
+      "probe": "chat",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "legacy_contract_executed": true,
+        "v2_has_explicit_owner": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "hybrid_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:hybrid_search"
+        ],
+        "sources": [
+          "neo4j",
+          "chroma",
+          "bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-rec_001": 1
+        },
+        "latency_ms": 0.04260000059730373
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_RECOMMENDATION",
+        "experts": [
+          "recipe_recommendation_expert"
+        ],
+        "tools": [
+          "search_recipe_knowledge"
+        ],
+        "sources": [
+          "chroma+bm25"
+        ],
+        "hard_constraints": [],
+        "data": {},
+        "calls": {
+          "BusinessRouter.route": 1,
+          "RecipeAgentRuntime.run (direct probe)": 1
+        },
+        "latency_ms": 0.017600000319362152
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "weather_001",
+      "category": "weather",
+      "severity": "P1",
+      "input": "根据北京天气推荐一道晚饭",
+      "probe": "weather",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "weather_availability": true,
+        "weather_failure_is_explicit": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "hybrid_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "get_user_location",
+          "get_weather",
+          "smart_recipe_query",
+          "route:hybrid_search"
+        ],
+        "sources": [
+          "neo4j",
+          "chroma",
+          "bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-weather_001": 1
+        },
+        "latency_ms": 0.03329999981360743
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_RECOMMENDATION",
+        "experts": [
+          "recipe_recommendation_expert"
+        ],
+        "tools": [
+          "get_current_weather",
+          "recommend_recipes"
+        ],
+        "sources": [
+          "weather_fixture",
+          "chroma+bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "available": true,
+          "city": "北京",
+          "condition": "晴",
+          "temperature_c": "24",
+          "humidity_percent": "",
+          "warning": ""
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "WeatherService.get_current": 1
+        },
+        "latency_ms": 0.11610000001383014
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "weather_degrade_001",
+      "category": "degradation",
+      "severity": "P1",
+      "input": "根据北京天气推荐一道晚饭",
+      "probe": "weather",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "weather_availability": true,
+        "weather_failure_is_explicit": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "hybrid_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:hybrid_search"
+        ],
+        "sources": [
+          "neo4j",
+          "chroma",
+          "bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-weather_degrade_001": 1
+        },
+        "latency_ms": 0.04099999932805076
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_RECOMMENDATION",
+        "experts": [
+          "recipe_recommendation_expert"
+        ],
+        "tools": [
+          "get_current_weather",
+          "recommend_recipes"
+        ],
+        "sources": [
+          "weather_fixture",
+          "chroma+bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "available": false,
+          "city": "北京",
+          "condition": "",
+          "temperature_c": "",
+          "humidity_percent": "",
+          "warning": "天气查询失败：offline weather fixture"
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "WeatherService.get_current": 1
+        },
+        "latency_ms": 0.02719999974942766
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "exclude_001",
+      "category": "hard_constraint",
+      "severity": "P0",
+      "input": "不要花生，推荐一道菜",
+      "probe": "constraint",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "accepted_set": true,
+        "unsafe_candidate_rejected": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "hybrid_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:hybrid_search"
+        ],
+        "sources": [
+          "neo4j",
+          "chroma",
+          "bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-exclude_001": 1
+        },
+        "latency_ms": 0.036300000829214696
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_RECOMMENDATION",
+        "experts": [
+          "recipe_recommendation_expert"
+        ],
+        "tools": [
+          "recommend_recipes"
+        ],
+        "sources": [
+          "fixture_recipe_evidence"
+        ],
+        "hard_constraints": [
+          "data_source",
+          "excluded_ingredients"
+        ],
+        "data": {
+          "accepted": [
+            "tomato-egg"
+          ],
+          "rejected": [
+            "peanut-chicken"
+          ]
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "ConstraintService.validate": 1
+        },
+        "latency_ms": 0.05779999992228113
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "allergen_001",
+      "category": "hard_constraint",
+      "severity": "P0",
+      "input": "我对花生过敏，请推荐一道菜",
+      "probe": "constraint",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "accepted_set": true,
+        "unsafe_candidate_rejected": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "hybrid_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:hybrid_search"
+        ],
+        "sources": [
+          "neo4j",
+          "chroma",
+          "bm25"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-allergen_001": 1
+        },
+        "latency_ms": 0.045900000259280205
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_RECOMMENDATION",
+        "experts": [
+          "recipe_recommendation_expert"
+        ],
+        "tools": [
+          "recommend_recipes"
+        ],
+        "sources": [
+          "fixture_recipe_evidence"
+        ],
+        "hard_constraints": [
+          "data_source",
+          "allergens"
+        ],
+        "data": {
+          "accepted": [
+            "tomato-egg"
+          ],
+          "rejected": [
+            "peanut-chicken"
+          ]
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "ConstraintService.validate": 1
+        },
+        "latency_ms": 0.04360000002634479
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "session_001",
+      "category": "multi_turn_memory",
+      "severity": "P0",
+      "input": "第一轮：不要花生；第二轮：按刚才的要求推荐",
+      "probe": "memory",
+      "passed": true,
+      "checks": {
+        "session_restored": true,
+        "message_count": true,
+        "message_order": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0007999997251317836
+      },
+      "v2": {
+        "entrypoint": "MemoryService + SQLite Repository",
+        "route": "persistent_session",
+        "experts": [
+          "MemoryService"
+        ],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "restored": true,
+          "message_count": 2,
+          "messages": [
+            "不要花生",
+            "按刚才的要求推荐"
+          ]
+        },
+        "calls": {
+          "MemoryService": 5,
+          "SQLite Repository": 5
+        },
+        "latency_ms": 22.826099999292637
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "nutrition_001",
+      "category": "nutrition",
+      "severity": "P1",
+      "input": "总结我上周的营养情况",
+      "probe": "nutrition",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "coverage": true,
+        "degradation_mode": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "vector_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:vector_search"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-nutrition_001": 1
+        },
+        "latency_ms": 0.061300000197661575
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "NUTRITION_PLANNING",
+        "experts": [
+          "nutrition_planning_expert"
+        ],
+        "tools": [
+          "get_confirmed_meal_history",
+          "calculate_recipe_nutrition"
+        ],
+        "sources": [
+          "fixture-v1"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "coverage": 1.0,
+          "precise": true,
+          "confirmed_meals": 1
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "NutritionService.summarize": 1
+        },
+        "latency_ms": 0.11369999992894009
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "nutrition_missing_001",
+      "category": "degradation",
+      "severity": "P1",
+      "input": "总结我上周的营养情况",
+      "probe": "nutrition",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "coverage": true,
+        "degradation_mode": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "vector_search",
+        "experts": [
+          "ReactAgent"
+        ],
+        "tools": [
+          "smart_recipe_query",
+          "route:vector_search"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "answer_nonempty": true
+        },
+        "calls": {
+          "ReactAgent.execute_stream": 1,
+          "thread:parity-nutrition_missing_001": 1
+        },
+        "latency_ms": 0.04220000027999049
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "NUTRITION_PLANNING",
+        "experts": [
+          "nutrition_planning_expert"
+        ],
+        "tools": [
+          "get_confirmed_meal_history",
+          "calculate_recipe_nutrition"
+        ],
+        "sources": [
+          "fixture-v1"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "coverage": 0.5,
+          "precise": false,
+          "confirmed_meals": 2
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "NutritionService.summarize": 1
+        },
+        "latency_ms": 0.06740000026184134
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "meal_query_001",
+      "category": "data_consistency",
+      "severity": "P0",
+      "input": "查询番茄炒蛋但只确认吃了白灼虾",
+      "probe": "meal_semantics",
+      "passed": true,
+      "checks": {
+        "query_not_consume": true,
+        "data_consistent": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0009000004865811206
+      },
+      "v2": {
+        "entrypoint": "MealHistoryService + SQLite Repository",
+        "route": "meal_history",
+        "experts": [
+          "nutrition_planning_expert"
+        ],
+        "tools": [
+          "get_confirmed_meal_history"
+        ],
+        "sources": [
+          "sqlite"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "confirmed_recipe_ids": [
+            "shrimp"
+          ],
+          "query_excluded": true
+        },
+        "calls": {
+          "MealHistoryService.load_confirmed": 1
+        },
+        "latency_ms": 6.520199999613396
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "feedback_001",
+      "category": "feedback",
+      "severity": "P0",
+      "input": "对同一回答重复提交 LIKE",
+      "probe": "feedback",
+      "passed": true,
+      "checks": {
+        "single_row": true,
+        "idempotent": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0014000006558489986
+      },
+      "v2": {
+        "entrypoint": "FeedbackService + SQLite Repository",
+        "route": "feedback_service",
+        "experts": [
+          "FeedbackService"
+        ],
+        "tools": [],
+        "sources": [
+          "sqlite"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "feedback_rows": 1,
+          "idempotent": true
+        },
+        "calls": {
+          "FeedbackService.submit": 2
+        },
+        "latency_ms": 10.692300000300747
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "bad_case_001",
+      "category": "bad_case",
+      "severity": "P1",
+      "input": "不要花生，重新推荐；同时发生工具失败和空检索",
+      "probe": "bad_case",
+      "passed": true,
+      "checks": {
+        "pending_review": true,
+        "candidate_created": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.001100000190490391
+      },
+      "v2": {
+        "entrypoint": "BadCaseService + SQLite Repository",
+        "route": "bad_case_evaluation",
+        "experts": [
+          "BadCaseService"
+        ],
+        "tools": [],
+        "sources": [
+          "trace",
+          "sqlite"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "status": "PENDING_REVIEW",
+          "score": 0.55,
+          "triggers": [
+            "TOOL_FAILURE",
+            "EMPTY_RETRIEVAL"
+          ],
+          "signal_ids": [
+            1,
+            2
+          ],
+          "candidate_id": 1,
+          "candidate_created": true,
+          "occurrence_count": 1
+        },
+        "calls": {
+          "BadCaseService.evaluate": 1
+        },
+        "latency_ms": 8.658899999318237
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "retrieval_degrade_001",
+      "category": "degradation",
+      "severity": "P1",
+      "input": "番茄炒蛋怎么做？",
+      "probe": "retrieval_degradation",
+      "passed": true,
+      "checks": {
+        "v2_route": true,
+        "fallback_used": true,
+        "expected_hit": true,
+        "surviving_source": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.001100000190490391
+      },
+      "v2": {
+        "entrypoint": "V2 component/runtime contract",
+        "route": "RECIPE_KNOWLEDGE",
+        "experts": [
+          "recipe_knowledge_expert"
+        ],
+        "tools": [
+          "search_recipe_knowledge"
+        ],
+        "sources": [
+          "chroma"
+        ],
+        "hard_constraints": [],
+        "data": {
+          "query": "番茄炒蛋怎么做？",
+          "strategy": "advanced_hybrid",
+          "hits": [
+            {
+              "recipe_id": "tomato-egg",
+              "recipe_name": "番茄炒蛋",
+              "source_path": "recipes/tomato-egg.md",
+              "content": "番茄炒蛋：番茄和鸡蛋用炒锅翻炒。",
+              "parent_id": null,
+              "chunk_id": null,
+              "schema_version": "retrieval_metadata_v1",
+              "knowledge_version": "unversioned",
+              "retrieval_sources": [
+                "chroma"
+              ],
+              "vector_score": null,
+              "bm25_score": null,
+              "graph_score": null,
+              "rerank_score": null,
+              "fused_score": 0.01639344262295082,
+              "metadata": {
+                "recipe_id": "tomato-egg",
+                "recipe_name": "番茄炒蛋",
+                "source_path": "recipes/tomato-egg.md"
+              }
+            }
+          ],
+          "graph_evidence": [],
+          "confidence": 0.3333333333333333,
+          "warnings": [
+            "graph retrieval failed: offline graph unavailable",
+            "bm25 retrieval failed: offline bm25 unavailable",
+            "graph evidence retrieval failed: '_FailingGraph' object has no attribute 'get_recipe_evidence'"
+          ],
+          "latency_ms": 0.07729999924777076,
+          "fallback_used": true
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "RetrievalService.retrieve": 1
+        },
+        "latency_ms": 0.13779999972030055
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "api_chat_001",
+      "category": "api_contract",
+      "severity": "P0",
+      "input": "POST /api/chat/stream",
+      "probe": "api_route",
+      "passed": true,
+      "checks": {
+        "api_route_registered": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0006999998731771484
+      },
+      "v2": {
+        "entrypoint": "FastAPI route table",
+        "route": "POST /api/chat/stream",
+        "experts": [
+          "FastAPI"
+        ],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "registered": true
+        },
+        "calls": {
+          "create_app": 1,
+          "route_table_probe": 1
+        },
+        "latency_ms": 50.420600000506965
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "api_feedback_001",
+      "category": "api_contract",
+      "severity": "P0",
+      "input": "POST /api/feedback",
+      "probe": "api_route",
+      "passed": false,
+      "checks": {
+        "api_route_registered": false
+      },
+      "failures": [
+        "api_route_registered"
+      ],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.001499999598308932
+      },
+      "v2": {
+        "entrypoint": "FastAPI route table",
+        "route": "POST /api/feedback",
+        "experts": [
+          "FastAPI"
+        ],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "registered": false
+        },
+        "calls": {
+          "create_app": 1,
+          "route_table_probe": 1
+        },
+        "latency_ms": 52.539400000569
+      },
+      "difference": {
+        "classification": "unexpected_regression",
+        "expected_design_difference": true,
+        "notes": [
+          "api_route_registered"
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "api_bad_case_admin_001",
+      "category": "api_contract",
+      "severity": "P1",
+      "input": "GET /api/admin/bad-cases",
+      "probe": "api_route",
+      "passed": false,
+      "checks": {
+        "api_route_registered": false
+      },
+      "failures": [
+        "api_route_registered"
+      ],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0015000005078036338
+      },
+      "v2": {
+        "entrypoint": "FastAPI route table",
+        "route": "GET /api/admin/bad-cases",
+        "experts": [
+          "FastAPI"
+        ],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "registered": false
+        },
+        "calls": {
+          "create_app": 1,
+          "route_table_probe": 1
+        },
+        "latency_ms": 51.2933999998495
+      },
+      "difference": {
+        "classification": "unexpected_regression",
+        "expected_design_difference": true,
+        "notes": [
+          "api_route_registered"
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "default_runtime_001",
+      "category": "runtime_wiring",
+      "severity": "P1",
+      "input": "默认 FastAPI 非 SIMPLE 请求",
+      "probe": "default_runtime",
+      "passed": false,
+      "checks": {
+        "default_runtime_is_v2": false
+      },
+      "failures": [
+        "default_runtime_is_v2"
+      ],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0017999991541728377
+      },
+      "v2": {
+        "entrypoint": "ApiContainer.build_default",
+        "route": "default_non_simple_executor",
+        "experts": [
+          "LazyLegacyExecutor"
+        ],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "executor_class": "LazyLegacyExecutor",
+          "uses_v2_runtime": false
+        },
+        "calls": {
+          "ApiContainer.build_default": 1
+        },
+        "latency_ms": 1.7785000000003492
+      },
+      "difference": {
+        "classification": "unexpected_regression",
+        "expected_design_difference": true,
+        "notes": [
+          "default_runtime_is_v2"
+        ],
+        "route_changed": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "methodology": "offline_contract_and_component_probe",
+  "thresholds": {
+    "p0_pass_rate": 1.0,
+    "p1_pass_rate": 1.0,
+    "api_contract_pass_rate": 1.0,
+    "data_consistency_pass_rate": 1.0
+  },
+  "cases": [
+    {
+      "id": "greeting_001",
+      "category": "simple_chat",
+      "severity": "P1",
+      "probe": "chat",
+      "input": "你好",
+      "expected": {"v2_route": "SIMPLE", "source": "none"}
+    },
+    {
+      "id": "recipe_qa_001",
+      "category": "knowledge",
+      "severity": "P1",
+      "probe": "chat",
+      "input": "宫保鸡丁怎么做？",
+      "expected": {"v2_route": "RECIPE_KNOWLEDGE", "source": "chroma"}
+    },
+    {
+      "id": "recipe_fact_001",
+      "category": "knowledge",
+      "severity": "P1",
+      "probe": "chat",
+      "input": "白灼虾需要哪些食材？",
+      "expected": {"v2_route": "RECIPE_KNOWLEDGE", "source": "chroma"}
+    },
+    {
+      "id": "rec_001",
+      "category": "recommendation",
+      "severity": "P1",
+      "probe": "chat",
+      "input": "我有番茄和鸡蛋，推荐一道晚饭",
+      "expected": {"v2_route": "RECIPE_RECOMMENDATION", "source": "chroma+bm25"}
+    },
+    {
+      "id": "weather_001",
+      "category": "weather",
+      "severity": "P1",
+      "probe": "weather",
+      "input": "根据北京天气推荐一道晚饭",
+      "city": "北京",
+      "provider_available": true,
+      "expected": {"v2_route": "RECIPE_RECOMMENDATION", "weather_available": true}
+    },
+    {
+      "id": "weather_degrade_001",
+      "category": "degradation",
+      "severity": "P1",
+      "probe": "weather",
+      "input": "根据北京天气推荐一道晚饭",
+      "city": "北京",
+      "provider_available": false,
+      "expected": {"v2_route": "RECIPE_RECOMMENDATION", "weather_available": false}
+    },
+    {
+      "id": "exclude_001",
+      "category": "hard_constraint",
+      "severity": "P0",
+      "probe": "constraint",
+      "input": "不要花生，推荐一道菜",
+      "excluded": ["花生"],
+      "allergens": [],
+      "expected": {"accepted": ["tomato-egg"], "rejected": ["peanut-chicken"]}
+    },
+    {
+      "id": "allergen_001",
+      "category": "hard_constraint",
+      "severity": "P0",
+      "probe": "constraint",
+      "input": "我对花生过敏，请推荐一道菜",
+      "excluded": [],
+      "allergens": ["花生"],
+      "expected": {"accepted": ["tomato-egg"], "rejected": ["peanut-chicken"]}
+    },
+    {
+      "id": "session_001",
+      "category": "multi_turn_memory",
+      "severity": "P0",
+      "probe": "memory",
+      "input": "第一轮：不要花生；第二轮：按刚才的要求推荐",
+      "expected": {"message_count": 2, "restored": true}
+    },
+    {
+      "id": "nutrition_001",
+      "category": "nutrition",
+      "severity": "P1",
+      "probe": "nutrition",
+      "input": "总结我上周的营养情况",
+      "include_unknown": false,
+      "expected": {"v2_route": "NUTRITION_PLANNING", "coverage": 1.0, "precise": true}
+    },
+    {
+      "id": "nutrition_missing_001",
+      "category": "degradation",
+      "severity": "P1",
+      "probe": "nutrition",
+      "input": "总结我上周的营养情况",
+      "include_unknown": true,
+      "expected": {"v2_route": "NUTRITION_PLANNING", "coverage": 0.5, "precise": false}
+    },
+    {
+      "id": "meal_query_001",
+      "category": "data_consistency",
+      "severity": "P0",
+      "probe": "meal_semantics",
+      "input": "查询番茄炒蛋但只确认吃了白灼虾",
+      "expected": {"confirmed_recipe_ids": ["shrimp"], "query_excluded": true}
+    },
+    {
+      "id": "feedback_001",
+      "category": "feedback",
+      "severity": "P0",
+      "probe": "feedback",
+      "input": "对同一回答重复提交 LIKE",
+      "expected": {"feedback_rows": 1, "idempotent": true}
+    },
+    {
+      "id": "bad_case_001",
+      "category": "bad_case",
+      "severity": "P1",
+      "probe": "bad_case",
+      "input": "不要花生，重新推荐；同时发生工具失败和空检索",
+      "expected": {"status": "PENDING_REVIEW", "candidate_created": true}
+    },
+    {
+      "id": "retrieval_degrade_001",
+      "category": "degradation",
+      "severity": "P1",
+      "probe": "retrieval_degradation",
+      "input": "番茄炒蛋怎么做？",
+      "expected": {"fallback_used": true, "recipe_id": "tomato-egg", "source": "chroma"}
+    },
+    {
+      "id": "api_chat_001",
+      "category": "api_contract",
+      "severity": "P0",
+      "probe": "api_route",
+      "input": "POST /api/chat/stream",
+      "method": "POST",
+      "path": "/api/chat/stream",
+      "expected": {"registered": true}
+    },
+    {
+      "id": "api_feedback_001",
+      "category": "api_contract",
+      "severity": "P0",
+      "probe": "api_route",
+      "input": "POST /api/feedback",
+      "method": "POST",
+      "path": "/api/feedback",
+      "expected": {"registered": true}
+    },
+    {
+      "id": "api_bad_case_admin_001",
+      "category": "api_contract",
+      "severity": "P1",
+      "probe": "api_route",
+      "input": "GET /api/admin/bad-cases",
+      "method": "GET",
+      "path": "/api/admin/bad-cases",
+      "expected": {"registered": true}
+    },
+    {
+      "id": "default_runtime_001",
+      "category": "runtime_wiring",
+      "severity": "P1",
+      "probe": "default_runtime",
+      "input": "默认 FastAPI 非 SIMPLE 请求",
+      "expected": {"uses_v2_runtime": true}
+    }
+  ]
+}

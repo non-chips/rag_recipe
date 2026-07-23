@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "measurement_scope": "offline_component_and_contract_probe",
+  "not_production_latency": true,
+  "legacy": {
+    "samples": 19,
+    "latency_ms": {
+      "p50": 0.0333,
+      "p95": 0.0613,
+      "max": 0.1213
+    },
+    "call_counts": {
+      "ReactAgent.execute_stream": 10,
+      "thread:parity-allergen_001": 1,
+      "thread:parity-exclude_001": 1,
+      "thread:parity-greeting_001": 1,
+      "thread:parity-nutrition_001": 1,
+      "thread:parity-nutrition_missing_001": 1,
+      "thread:parity-rec_001": 1,
+      "thread:parity-recipe_fact_001": 1,
+      "thread:parity-recipe_qa_001": 1,
+      "thread:parity-weather_001": 1,
+      "thread:parity-weather_degrade_001": 1
+    }
+  },
+  "v2": {
+    "samples": 19,
+    "latency_ms": {
+      "p50": 0.1378,
+      "p95": 51.2934,
+      "max": 52.5394
+    },
+    "call_counts": {
+      "ApiContainer.build_default": 1,
+      "BadCaseService.evaluate": 1,
+      "BusinessRouter.route": 11,
+      "ConstraintService.validate": 2,
+      "FeedbackService.submit": 2,
+      "MealHistoryService.load_confirmed": 1,
+      "MemoryService": 5,
+      "NutritionService.summarize": 2,
+      "RecipeAgentRuntime.run (direct probe)": 3,
+      "RetrievalService.retrieve": 1,
+      "SQLite Repository": 5,
+      "SimpleChatService.respond": 1,
+      "WeatherService.get_current": 2,
+      "create_app": 3,
+      "route_table_probe": 3
+    }
+  },
+  "by_case": [
+    {
+      "id": "greeting_001",
+      "legacy_latency_ms": 0.1213,
+      "v2_latency_ms": 0.3025,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-greeting_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "SimpleChatService.respond": 1
+      }
+    },
+    {
+      "id": "recipe_qa_001",
+      "legacy_latency_ms": 0.0481,
+      "v2_latency_ms": 0.0211,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-recipe_qa_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "RecipeAgentRuntime.run (direct probe)": 1
+      }
+    },
+    {
+      "id": "recipe_fact_001",
+      "legacy_latency_ms": 0.0437,
+      "v2_latency_ms": 0.0174,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-recipe_fact_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "RecipeAgentRuntime.run (direct probe)": 1
+      }
+    },
+    {
+      "id": "rec_001",
+      "legacy_latency_ms": 0.0426,
+      "v2_latency_ms": 0.0176,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-rec_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "RecipeAgentRuntime.run (direct probe)": 1
+      }
+    },
+    {
+      "id": "weather_001",
+      "legacy_latency_ms": 0.0333,
+      "v2_latency_ms": 0.1161,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-weather_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "WeatherService.get_current": 1
+      }
+    },
+    {
+      "id": "weather_degrade_001",
+      "legacy_latency_ms": 0.041,
+      "v2_latency_ms": 0.0272,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-weather_degrade_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "WeatherService.get_current": 1
+      }
+    },
+    {
+      "id": "exclude_001",
+      "legacy_latency_ms": 0.0363,
+      "v2_latency_ms": 0.0578,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-exclude_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "ConstraintService.validate": 1
+      }
+    },
+    {
+      "id": "allergen_001",
+      "legacy_latency_ms": 0.0459,
+      "v2_latency_ms": 0.0436,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-allergen_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "ConstraintService.validate": 1
+      }
+    },
+    {
+      "id": "session_001",
+      "legacy_latency_ms": 0.0008,
+      "v2_latency_ms": 22.8261,
+      "legacy_calls": {},
+      "v2_calls": {
+        "MemoryService": 5,
+        "SQLite Repository": 5
+      }
+    },
+    {
+      "id": "nutrition_001",
+      "legacy_latency_ms": 0.0613,
+      "v2_latency_ms": 0.1137,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-nutrition_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "NutritionService.summarize": 1
+      }
+    },
+    {
+      "id": "nutrition_missing_001",
+      "legacy_latency_ms": 0.0422,
+      "v2_latency_ms": 0.0674,
+      "legacy_calls": {
+        "ReactAgent.execute_stream": 1,
+        "thread:parity-nutrition_missing_001": 1
+      },
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "NutritionService.summarize": 1
+      }
+    },
+    {
+      "id": "meal_query_001",
+      "legacy_latency_ms": 0.0009,
+      "v2_latency_ms": 6.5202,
+      "legacy_calls": {},
+      "v2_calls": {
+        "MealHistoryService.load_confirmed": 1
+      }
+    },
+    {
+      "id": "feedback_001",
+      "legacy_latency_ms": 0.0014,
+      "v2_latency_ms": 10.6923,
+      "legacy_calls": {},
+      "v2_calls": {
+        "FeedbackService.submit": 2
+      }
+    },
+    {
+      "id": "bad_case_001",
+      "legacy_latency_ms": 0.0011,
+      "v2_latency_ms": 8.6589,
+      "legacy_calls": {},
+      "v2_calls": {
+        "BadCaseService.evaluate": 1
+      }
+    },
+    {
+      "id": "retrieval_degrade_001",
+      "legacy_latency_ms": 0.0011,
+      "v2_latency_ms": 0.1378,
+      "legacy_calls": {},
+      "v2_calls": {
+        "BusinessRouter.route": 1,
+        "RetrievalService.retrieve": 1
+      }
+    },
+    {
+      "id": "api_chat_001",
+      "legacy_latency_ms": 0.0007,
+      "v2_latency_ms": 50.4206,
+      "legacy_calls": {},
+      "v2_calls": {
+        "create_app": 1,
+        "route_table_probe": 1
+      }
+    },
+    {
+      "id": "api_feedback_001",
+      "legacy_latency_ms": 0.0015,
+      "v2_latency_ms": 52.5394,
+      "legacy_calls": {},
+      "v2_calls": {
+        "create_app": 1,
+        "route_table_probe": 1
+      }
+    },
+    {
+      "id": "api_bad_case_admin_001",
+      "legacy_latency_ms": 0.0015,
+      "v2_latency_ms": 51.2934,
+      "legacy_calls": {},
+      "v2_calls": {
+        "create_app": 1,
+        "route_table_probe": 1
+      }
+    },
+    {
+      "id": "default_runtime_001",
+      "legacy_latency_ms": 0.0018,
+      "v2_latency_ms": 1.7785,
+      "legacy_calls": {},
+      "v2_calls": {
+        "ApiContainer.build_default": 1
+      }
+    }
+  ]
+}
