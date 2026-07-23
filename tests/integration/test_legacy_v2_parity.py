@@ -32,7 +32,7 @@ def test_dataset_covers_required_task21_capabilities() -> None:
     assert len(payload["cases"]) >= 20
 
 
-def test_parity_report_reaches_p0_p1_gate_before_task22() -> None:
+def test_parity_report_reaches_p0_p1_gate_after_task22() -> None:
     parity, performance = ParityEvaluator(DATASET).run()
     by_id = {case["id"]: case for case in parity["cases"]}
 
@@ -47,7 +47,7 @@ def test_parity_report_reaches_p0_p1_gate_before_task22() -> None:
     assert by_id["api_bad_case_admin_001"]["passed"] is True
     assert by_id["v2_runtime_direct_001"]["passed"] is True
     assert by_id["default_runtime_001"]["passed"] is True
-    assert by_id["default_runtime_001"]["v2"]["data"]["uses_v2_runtime"] is False
+    assert by_id["default_runtime_001"]["v2"]["data"]["uses_v2_runtime"] is True
     assert parity["status"] == "PASSED"
     assert parity["summary"]["by_severity"]["P0"]["pass_rate"] == 1.0
     assert parity["summary"]["by_severity"]["P1"]["pass_rate"] == 1.0

@@ -178,11 +178,11 @@
     },
     {
       "id": "default_runtime_001",
-      "category": "task22_pre_switch",
+      "category": "task22_post_switch",
       "severity": "INFO",
       "probe": "default_runtime",
       "input": "Task22 切换前的默认 FastAPI 非 SIMPLE 请求",
-      "expected": {"uses_v2_runtime": false}
+      "expected": {"uses_v2_runtime": true}
     }
   ]
 }

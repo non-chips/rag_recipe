@@ -13,10 +13,9 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from recipe_assistant.agents.harness import (
     LegacyReactAgentAdapter,
-    RecipeAgentHarness,
 )
+from recipe_assistant.agents.factory import build_runtime_harness
 from recipe_assistant.agents.result import ChatRequest, ChatServiceResult
-from recipe_assistant.agents.router import BusinessRouter
 from recipe_assistant.api.application import ApiApplicationService
 from recipe_assistant.core.config import PROJECT_ROOT, Settings, get_settings
 from recipe_assistant.core.container import ResourceContainer
@@ -27,7 +26,6 @@ from recipe_assistant.core.database import (
 )
 from recipe_assistant.services.chat import ChatService
 from recipe_assistant.services.nutrition import NutritionCatalog
-from recipe_assistant.services.simple_chat import SimpleChatService
 
 
 class ChatRunner(Protocol):
@@ -62,9 +60,9 @@ class ApiContainer:
         resolved_settings = settings or get_settings()
         engine = create_database_engine()
         session_factory = create_session_factory(engine)
-        harness = RecipeAgentHarness(
-            BusinessRouter(),
-            SimpleChatService(),
+        harness = build_runtime_harness(
+            resolved_settings,
+            session_factory,
             LazyLegacyExecutor(),
         )
         catalog_path = Path(PROJECT_ROOT) / "data" / "nutrition" / "recipes.json"

@@ -93,7 +93,7 @@
         "passed": 1,
         "failed": 0
       },
-      "task22_pre_switch": {
+      "task22_post_switch": {
         "total": 1,
         "passed": 1,
         "failed": 0
@@ -142,7 +142,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-greeting_001": 1
         },
-        "latency_ms": 0.12490000062825857
+        "latency_ms": 0.11629999971773941
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -158,7 +158,7 @@
           "BusinessRouter.route": 1,
           "SimpleChatService.respond": 1
         },
-        "latency_ms": 0.3429000007599825
+        "latency_ms": 0.3274000000601518
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -203,7 +203,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-recipe_qa_001": 1
         },
-        "latency_ms": 0.05160000000614673
+        "latency_ms": 0.05030000011174707
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -223,7 +223,7 @@
           "BusinessRouter.route": 1,
           "RecipeAgentRuntime.run (direct probe)": 1
         },
-        "latency_ms": 0.022400000489142258
+        "latency_ms": 0.02210000002378365
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -268,7 +268,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-recipe_fact_001": 1
         },
-        "latency_ms": 0.043900000491703395
+        "latency_ms": 0.04239999998389976
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -288,7 +288,7 @@
           "BusinessRouter.route": 1,
           "RecipeAgentRuntime.run (direct probe)": 1
         },
-        "latency_ms": 0.019799999790848233
+        "latency_ms": 0.01629999951546779
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -335,7 +335,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-rec_001": 1
         },
-        "latency_ms": 0.042300000131945126
+        "latency_ms": 0.046799999836366624
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -355,7 +355,7 @@
           "BusinessRouter.route": 1,
           "RecipeAgentRuntime.run (direct probe)": 1
         },
-        "latency_ms": 0.018700000509852543
+        "latency_ms": 0.01720000000204891
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -404,7 +404,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-weather_001": 1
         },
-        "latency_ms": 0.0334999995175167
+        "latency_ms": 0.0320999997711624
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -433,7 +433,7 @@
           "BusinessRouter.route": 1,
           "WeatherService.get_current": 1
         },
-        "latency_ms": 0.0456000007034163
+        "latency_ms": 0.04569999964587623
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -480,7 +480,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-weather_degrade_001": 1
         },
-        "latency_ms": 0.03500000002532033
+        "latency_ms": 0.032500000088475645
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -509,7 +509,7 @@
           "BusinessRouter.route": 1,
           "WeatherService.get_current": 1
         },
-        "latency_ms": 0.02570000015111873
+        "latency_ms": 0.024399999347224366
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -556,7 +556,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-exclude_001": 1
         },
-        "latency_ms": 0.03529999958118424
+        "latency_ms": 0.03280000055383425
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -586,7 +586,7 @@
           "BusinessRouter.route": 1,
           "ConstraintService.validate": 1
         },
-        "latency_ms": 0.06600000051548705
+        "latency_ms": 0.06399999983841553
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -633,7 +633,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-allergen_001": 1
         },
-        "latency_ms": 0.04660000013245735
+        "latency_ms": 0.06310000026132911
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -663,7 +663,7 @@
           "BusinessRouter.route": 1,
           "ConstraintService.validate": 1
         },
-        "latency_ms": 0.04389999958220869
+        "latency_ms": 0.044800000068789814
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -699,7 +699,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0008999995770864189
+        "latency_ms": 0.0033999995139311068
       },
       "v2": {
         "entrypoint": "MemoryService + SQLite Repository",
@@ -722,7 +722,7 @@
           "MemoryService": 5,
           "SQLite Repository": 5
         },
-        "latency_ms": 29.159100000470062
+        "latency_ms": 28.852500000539294
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -767,7 +767,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-nutrition_001": 1
         },
-        "latency_ms": 0.06639999992330559
+        "latency_ms": 0.06299999949987978
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -792,7 +792,7 @@
           "BusinessRouter.route": 1,
           "NutritionService.summarize": 1
         },
-        "latency_ms": 0.12489999971876387
+        "latency_ms": 0.11499999982333975
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -837,7 +837,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-nutrition_missing_001": 1
         },
-        "latency_ms": 0.04400000034365803
+        "latency_ms": 0.041599999349273276
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -862,7 +862,7 @@
           "BusinessRouter.route": 1,
           "NutritionService.summarize": 1
         },
-        "latency_ms": 0.06769999981770525
+        "latency_ms": 0.08259999958681874
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -897,7 +897,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0007999997251317836
+        "latency_ms": 0.0008000006346264854
       },
       "v2": {
         "entrypoint": "MealHistoryService + SQLite Repository",
@@ -921,7 +921,7 @@
         "calls": {
           "MealHistoryService.load_confirmed": 1
         },
-        "latency_ms": 7.917599999927916
+        "latency_ms": 7.896799999798532
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -956,7 +956,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0013999997463542968
+        "latency_ms": 0.0013000008038943633
       },
       "v2": {
         "entrypoint": "FeedbackService + SQLite Repository",
@@ -976,7 +976,7 @@
         "calls": {
           "FeedbackService.submit": 2
         },
-        "latency_ms": 11.825500000668399
+        "latency_ms": 11.811200000011013
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1043,7 +1043,7 @@
         "calls": {
           "BadCaseService.evaluate": 1
         },
-        "latency_ms": 10.966100000587176
+        "latency_ms": 11.436600000706676
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1080,7 +1080,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0012999998943996616
+        "latency_ms": 0.0013999997463542968
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -1130,14 +1130,14 @@
             "bm25 retrieval failed: offline bm25 unavailable",
             "graph evidence retrieval failed: '_FailingGraph' object has no attribute 'get_recipe_evidence'"
           ],
-          "latency_ms": 0.172299999576353,
+          "latency_ms": 0.08410000009462237,
           "fallback_used": true
         },
         "calls": {
           "BusinessRouter.route": 1,
           "RetrievalService.retrieve": 1
         },
-        "latency_ms": 0.2395999999862397
+        "latency_ms": 0.1449999999749707
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1171,7 +1171,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0012000000424450263
+        "latency_ms": 0.0007999997251317836
       },
       "v2": {
         "entrypoint": "FastAPI route table",
@@ -1189,7 +1189,7 @@
           "create_app": 1,
           "route_table_probe": 1
         },
-        "latency_ms": 142.1356000000742
+        "latency_ms": 133.07330000043294
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1223,7 +1223,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0022999993234407157
+        "latency_ms": 0.001499999598308932
       },
       "v2": {
         "entrypoint": "FastAPI route table",
@@ -1241,7 +1241,7 @@
           "create_app": 1,
           "route_table_probe": 1
         },
-        "latency_ms": 122.23639999956504
+        "latency_ms": 116.79999999978463
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1293,7 +1293,7 @@
           "create_app": 1,
           "route_table_probe": 1
         },
-        "latency_ms": 122.63140000050043
+        "latency_ms": 115.25309999979072
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1328,7 +1328,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0017000002117129043
+        "latency_ms": 0.0020000006770715117
       },
       "v2": {
         "entrypoint": "RecipeAgentRuntime.run (direct)",
@@ -1350,7 +1350,7 @@
           "RecipeCoordinator.coordinate": 1,
           "task21_runtime_probe_expert": 4
         },
-        "latency_ms": 1.29319999996369
+        "latency_ms": 0.6955999997444451
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1363,13 +1363,13 @@
     },
     {
       "id": "default_runtime_001",
-      "category": "task22_pre_switch",
+      "category": "task22_post_switch",
       "severity": "INFO",
       "input": "Task22 切换前的默认 FastAPI 非 SIMPLE 请求",
       "probe": "default_runtime",
       "passed": true,
       "checks": {
-        "runtime_matches_pre_task22_phase": true
+        "runtime_matches_task22_phase": true
       },
       "failures": [],
       "legacy": {
@@ -1384,25 +1384,26 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0018999999156221747
+        "latency_ms": 0.0012000000424450263
       },
       "v2": {
         "entrypoint": "ApiContainer.build_default",
-        "route": "default_non_simple_executor",
+        "route": "default_runtime_harness",
         "experts": [
-          "LazyLegacyExecutor"
+          "MultiExpertHarness"
         ],
         "tools": [],
         "sources": [],
         "hard_constraints": [],
         "data": {
-          "executor_class": "LazyLegacyExecutor",
-          "uses_v2_runtime": false
+          "harness_class": "MultiExpertHarness",
+          "runtime_mode": "v2",
+          "uses_v2_runtime": true
         },
         "calls": {
           "ApiContainer.build_default": 1
         },
-        "latency_ms": 1.7748999998730142
+        "latency_ms": 1.813100000617851
       },
       "difference": {
         "classification": "expected_or_equivalent",

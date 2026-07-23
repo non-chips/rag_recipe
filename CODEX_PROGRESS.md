@@ -26,14 +26,15 @@
 | 19 | DONE | 未提交 | 离线评测：41/41；完整回归：141 passed；Ruff：通过；Windows API/Streamlit 冒烟：通过 | 旧入口仍有调用，未删除；默认反馈/管理路由未注册的发布风险保留并写入最终迁移报告 |
 | 20 | DONE | `pre-legacy-decommission` / `archive/legacy-react-agent` → `3af7683` | 数据备份 44 文件、SHA-256 0 失败；完整回归：141 passed；Ruff：通过；Windows 环境检查：通过 | 仅完成冻结、盘点和备份；默认入口未切换、旧代码未删除；Neo4j dump 未提供；Task 14 状态仍为 BLOCKED |
 | 21 | DONE | `task21 evidence + remediation commits` | 对照评测：20/20；P0：7/7；P1：12/12；API/数据一致性：100%；针对性测试：9 passed | 反馈与 Bad Case 路由已注册；V2 Runtime 可直接执行；默认 Runtime 保持旧实现并留给 Task 22 切换 |
+| 22 | DONE | 本次独立提交 | 默认切换专项：10 passed；完整回归：154 passed；Ruff：通过；Windows 环境检查：通过；观测回放：120/120 | 默认 Runtime 已切换 V2；legacy/shadow 仅允许开发/测试显式启用；默认不降级旧链路；未删除旧代码 |
 
 状态只允许：`TODO`、`IN_PROGRESS`、`BLOCKED`、`DONE`。
 
 ## 当前阻塞
 
-- 无阻止进入 Task 22 的 P0/P1 门禁失败。
+- 无阻止进入 Task 23 的 P0/P1 门禁失败；Task 22 默认切换验收已完成。
 - Task 20 已备份 Neo4j 可重建材料，但没有外部 Neo4j 数据库 dump；启用 Neo4j 的环境在任何清库或重建前必须补充一致性 dump。
-- 默认 FastAPI 的非 SIMPLE 请求仍通过 `LazyLegacyExecutor` 调用旧 `ReactAgent`；这是 Task 22 的预定切换范围，Task 21 未提前修改默认运行模式。
+- 默认 FastAPI 请求已通过 `MultiExpertHarness` 进入 V2 Runtime；旧 `ReactAgent` 仅保留为 development/test 的显式 `legacy`/`shadow` 回滚与观测路径。
 
 ## 关键架构决策
 

@@ -5,9 +5,9 @@
   "legacy": {
     "samples": 20,
     "latency_ms": {
-      "p50": 0.0179,
-      "p95": 0.0664,
-      "max": 0.1249
+      "p50": 0.01775,
+      "p95": 0.0631,
+      "max": 0.1163
     },
     "call_counts": {
       "ReactAgent.execute_stream": 10,
@@ -26,9 +26,9 @@
   "v2": {
     "samples": 20,
     "latency_ms": {
-      "p50": 0.29125,
-      "p95": 122.6314,
-      "max": 142.1356
+      "p50": 0.2362,
+      "p95": 116.8,
+      "max": 133.0733
     },
     "call_counts": {
       "ApiContainer.build_default": 1,
@@ -54,8 +54,8 @@
   "by_case": [
     {
       "id": "greeting_001",
-      "legacy_latency_ms": 0.1249,
-      "v2_latency_ms": 0.3429,
+      "legacy_latency_ms": 0.1163,
+      "v2_latency_ms": 0.3274,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-greeting_001": 1
@@ -67,8 +67,8 @@
     },
     {
       "id": "recipe_qa_001",
-      "legacy_latency_ms": 0.0516,
-      "v2_latency_ms": 0.0224,
+      "legacy_latency_ms": 0.0503,
+      "v2_latency_ms": 0.0221,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-recipe_qa_001": 1
@@ -80,8 +80,8 @@
     },
     {
       "id": "recipe_fact_001",
-      "legacy_latency_ms": 0.0439,
-      "v2_latency_ms": 0.0198,
+      "legacy_latency_ms": 0.0424,
+      "v2_latency_ms": 0.0163,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-recipe_fact_001": 1
@@ -93,8 +93,8 @@
     },
     {
       "id": "rec_001",
-      "legacy_latency_ms": 0.0423,
-      "v2_latency_ms": 0.0187,
+      "legacy_latency_ms": 0.0468,
+      "v2_latency_ms": 0.0172,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-rec_001": 1
@@ -106,8 +106,8 @@
     },
     {
       "id": "weather_001",
-      "legacy_latency_ms": 0.0335,
-      "v2_latency_ms": 0.0456,
+      "legacy_latency_ms": 0.0321,
+      "v2_latency_ms": 0.0457,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-weather_001": 1
@@ -119,8 +119,8 @@
     },
     {
       "id": "weather_degrade_001",
-      "legacy_latency_ms": 0.035,
-      "v2_latency_ms": 0.0257,
+      "legacy_latency_ms": 0.0325,
+      "v2_latency_ms": 0.0244,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-weather_degrade_001": 1
@@ -132,8 +132,8 @@
     },
     {
       "id": "exclude_001",
-      "legacy_latency_ms": 0.0353,
-      "v2_latency_ms": 0.066,
+      "legacy_latency_ms": 0.0328,
+      "v2_latency_ms": 0.064,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-exclude_001": 1
@@ -145,8 +145,8 @@
     },
     {
       "id": "allergen_001",
-      "legacy_latency_ms": 0.0466,
-      "v2_latency_ms": 0.0439,
+      "legacy_latency_ms": 0.0631,
+      "v2_latency_ms": 0.0448,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-allergen_001": 1
@@ -158,8 +158,8 @@
     },
     {
       "id": "session_001",
-      "legacy_latency_ms": 0.0009,
-      "v2_latency_ms": 29.1591,
+      "legacy_latency_ms": 0.0034,
+      "v2_latency_ms": 28.8525,
       "legacy_calls": {},
       "v2_calls": {
         "MemoryService": 5,
@@ -168,8 +168,8 @@
     },
     {
       "id": "nutrition_001",
-      "legacy_latency_ms": 0.0664,
-      "v2_latency_ms": 0.1249,
+      "legacy_latency_ms": 0.063,
+      "v2_latency_ms": 0.115,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-nutrition_001": 1
@@ -181,8 +181,8 @@
     },
     {
       "id": "nutrition_missing_001",
-      "legacy_latency_ms": 0.044,
-      "v2_latency_ms": 0.0677,
+      "legacy_latency_ms": 0.0416,
+      "v2_latency_ms": 0.0826,
       "legacy_calls": {
         "ReactAgent.execute_stream": 1,
         "thread:parity-nutrition_missing_001": 1
@@ -195,7 +195,7 @@
     {
       "id": "meal_query_001",
       "legacy_latency_ms": 0.0008,
-      "v2_latency_ms": 7.9176,
+      "v2_latency_ms": 7.8968,
       "legacy_calls": {},
       "v2_calls": {
         "MealHistoryService.load_confirmed": 1
@@ -203,8 +203,8 @@
     },
     {
       "id": "feedback_001",
-      "legacy_latency_ms": 0.0014,
-      "v2_latency_ms": 11.8255,
+      "legacy_latency_ms": 0.0013,
+      "v2_latency_ms": 11.8112,
       "legacy_calls": {},
       "v2_calls": {
         "FeedbackService.submit": 2
@@ -213,7 +213,7 @@
     {
       "id": "bad_case_001",
       "legacy_latency_ms": 0.0012,
-      "v2_latency_ms": 10.9661,
+      "v2_latency_ms": 11.4366,
       "legacy_calls": {},
       "v2_calls": {
         "BadCaseService.evaluate": 1
@@ -221,8 +221,8 @@
     },
     {
       "id": "retrieval_degrade_001",
-      "legacy_latency_ms": 0.0013,
-      "v2_latency_ms": 0.2396,
+      "legacy_latency_ms": 0.0014,
+      "v2_latency_ms": 0.145,
       "legacy_calls": {},
       "v2_calls": {
         "BusinessRouter.route": 1,
@@ -231,8 +231,8 @@
     },
     {
       "id": "api_chat_001",
-      "legacy_latency_ms": 0.0012,
-      "v2_latency_ms": 142.1356,
+      "legacy_latency_ms": 0.0008,
+      "v2_latency_ms": 133.0733,
       "legacy_calls": {},
       "v2_calls": {
         "create_app": 1,
@@ -241,8 +241,8 @@
     },
     {
       "id": "api_feedback_001",
-      "legacy_latency_ms": 0.0023,
-      "v2_latency_ms": 122.2364,
+      "legacy_latency_ms": 0.0015,
+      "v2_latency_ms": 116.8,
       "legacy_calls": {},
       "v2_calls": {
         "create_app": 1,
@@ -252,7 +252,7 @@
     {
       "id": "api_bad_case_admin_001",
       "legacy_latency_ms": 0.0017,
-      "v2_latency_ms": 122.6314,
+      "v2_latency_ms": 115.2531,
       "legacy_calls": {},
       "v2_calls": {
         "create_app": 1,
@@ -261,8 +261,8 @@
     },
     {
       "id": "v2_runtime_direct_001",
-      "legacy_latency_ms": 0.0017,
-      "v2_latency_ms": 1.2932,
+      "legacy_latency_ms": 0.002,
+      "v2_latency_ms": 0.6956,
       "legacy_calls": {},
       "v2_calls": {
         "BusinessRouter.route": 1,
@@ -273,8 +273,8 @@
     },
     {
       "id": "default_runtime_001",
-      "legacy_latency_ms": 0.0019,
-      "v2_latency_ms": 1.7749,
+      "legacy_latency_ms": 0.0012,
+      "v2_latency_ms": 1.8131,
       "legacy_calls": {},
       "v2_calls": {
         "ApiContainer.build_default": 1

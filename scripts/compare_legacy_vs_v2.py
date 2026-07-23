@@ -706,19 +706,25 @@ class ParityEvaluator:
     def _probe_default_runtime(self, case: dict[str, Any]):
         observation = _empty_observation("ApiContainer.build_default")
         container = ApiContainer.build_default()
-        executor_name = type(container.chat_runner.harness.executor).__name__
+        harness = container.chat_runner.harness
+        harness_name = type(harness).__name__
+        runtime_mode = getattr(harness, "mode", "legacy")
         container.engine.dispose()
-        uses_v2 = executor_name not in {"LazyLegacyExecutor", "LegacyReactAgentAdapter"}
+        uses_v2 = harness_name == "MultiExpertHarness" and runtime_mode == "v2"
         observation.update(
             {
-                "route": "default_non_simple_executor",
-                "experts": [executor_name],
-                "data": {"executor_class": executor_name, "uses_v2_runtime": uses_v2},
+                "route": "default_runtime_harness",
+                "experts": [harness_name],
+                "data": {
+                    "harness_class": harness_name,
+                    "runtime_mode": runtime_mode,
+                    "uses_v2_runtime": uses_v2,
+                },
                 "calls": {"ApiContainer.build_default": 1},
             }
         )
         return observation, {
-            "runtime_matches_pre_task22_phase": (
+            "runtime_matches_task22_phase": (
                 uses_v2 is case["expected"]["uses_v2_runtime"]
             )
         }

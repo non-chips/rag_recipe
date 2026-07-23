@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "task": "task_22",
+  "observation_type": "deterministic_artificial_replay",
+  "runtime_configuration": {
+    "AGENT_RUNTIME_MODE": "v2",
+    "LEGACY_FALLBACK_ENABLED": false,
+    "primary_runtime": "MultiExpertHarness + RecipeAgentRuntime",
+    "legacy_available_only_by_explicit_mode": true
+  },
+  "methodology": {
+    "description": "Use the production BusinessRouter and MultiExpertHarness with a deterministic injected V2 runtime so that external LLM, weather and retrieval services do not affect replay repeatability.",
+    "query_groups": [
+      "simple_chat",
+      "recipe_knowledge",
+      "recipe_recommendation",
+      "weather_recommendation",
+      "nutrition_planning",
+      "complex_multi_expert"
+    ],
+    "replays_per_group": 20,
+    "external_network_calls": 0,
+    "data_mutation": false
+  },
+  "result": {
+    "total": 120,
+    "passed": 120,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "legacy_primary_responses": 0,
+    "legacy_fallbacks": 0,
+    "routes": {
+      "SIMPLE": 20,
+      "RECIPE_KNOWLEDGE": 20,
+      "RECIPE_RECOMMENDATION": 40,
+      "NUTRITION_PLANNING": 20,
+      "COMPLEX": 20
+    },
+    "sample_latency_ms": {
+      "p50": 0.02,
+      "p95": 0.028
+    }
+  },
+  "additional_evidence": {
+    "real_v2_assembly_without_retrieval": "passed with explicit insufficient-evidence response",
+    "shadow_primary_response": "v2",
+    "shadow_legacy_comparison": "background only",
+    "production_legacy_mode_rejected": true,
+    "production_shadow_mode_rejected": true,
+    "production_legacy_fallback_rejected": true
+  },
+  "limitations": [
+    "Latency values measure local deterministic harness overhead and are not production LLM or retrieval latency.",
+    "Live DeepSeek, AMap, Chroma and Neo4j quality remains covered by later Windows smoke and operational observation.",
+    "The legacy implementation remains in the repository for explicit development rollback and Task23 isolation work."
+  ],
+  "gate": {
+    "minimum_replays": 100,
+    "minimum_pass_rate": 1.0,
+    "met": true
+  }
+}
