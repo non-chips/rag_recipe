@@ -42,10 +42,20 @@ python -m compileall recipe_assistant frontend
 ## 迁移与数据保护
 
 - 当前架构：`docs/current_architecture.md`
+- V2 最终架构：`docs/migration/final_architecture.md`
+- 下线最终报告：`docs/migration/legacy_decommission_report.md`
 - 调用者审计：`docs/migration/legacy_callers_report.md`
 - 已删除文件：`docs/migration/removed_legacy_files.md`
 - 数据备份：`docs/migration/data_backup_plan.md`
 - 回滚说明：`docs/migration/rollback.md`
+
+最终验证：
+
+```powershell
+$env:PROJECT_PYTHON = "D:\Anaconda\envs\rag\python.exe"
+powershell.exe -ExecutionPolicy Bypass -File scripts\final_smoke_test.ps1
+python scripts\run_evaluation.py --output reports\final_evaluation.json
+```
 
 下线基线由 `pre-legacy-decommission` 标签和
 `archive/legacy-react-agent` 分支保护。SQLite、Chroma、BM25、Neo4j、

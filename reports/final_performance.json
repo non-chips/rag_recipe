@@ -1,0 +1,140 @@
+﻿{
+    "schema_version":  1,
+    "task":  "task_25",
+    "generated_at":  "2026-07-23T03:15:43.2696537Z",
+    "python":  "D:\\Anaconda\\envs\\rag\\python.exe",
+    "smoke":  {
+                  "total":  15,
+                  "passed":  15,
+                  "failed":  0,
+                  "duration_ms":  24617.074,
+                  "cases":  [
+                                {
+                                    "name":  "health_and_resources",
+                                    "node":  "tests/contract/test_resource_api.py::test_lifespan_health_and_basic_resource_round_trip",
+                                    "passed":  true,
+                                    "duration_ms":  1885.273
+                                },
+                                {
+                                    "name":  "chat_sse",
+                                    "node":  "tests/e2e/test_chat_api.py::test_chat_sse_persists_session_messages_and_trace",
+                                    "passed":  true,
+                                    "duration_ms":  1894.594
+                                },
+                                {
+                                    "name":  "session_profile_trace",
+                                    "node":  "tests/integration/test_chat_service.py::test_chat_service_creates_and_restores_session_with_profile_history_and_trace",
+                                    "passed":  true,
+                                    "duration_ms":  1466.735
+                                },
+                                {
+                                    "name":  "recipe_knowledge",
+                                    "node":  "tests/e2e/test_recipe_qa_flow.py::test_recipe_question_runs_through_real_knowledge_expert",
+                                    "passed":  true,
+                                    "duration_ms":  1497.012
+                                },
+                                {
+                                    "name":  "recommendation_constraints",
+                                    "node":  "tests/e2e/test_weather_recommendation_flow.py::test_weather_recommendation_filters_allergens_and_supplements_evidence",
+                                    "passed":  true,
+                                    "duration_ms":  1490.128
+                                },
+                                {
+                                    "name":  "weather_degradation",
+                                    "node":  "tests/e2e/test_weather_recommendation_flow.py::test_weather_failure_does_not_block_safe_recommendations",
+                                    "passed":  true,
+                                    "duration_ms":  1468.935
+                                },
+                                {
+                                    "name":  "nutrition_report",
+                                    "node":  "tests/integration/test_nutrition_report.py::test_nutrition_expert_publishes_source_aware_json_report",
+                                    "passed":  true,
+                                    "duration_ms":  1453.535
+                                },
+                                {
+                                    "name":  "query_consume_guard",
+                                    "node":  "tests/contract/test_resource_api.py::test_meal_confirmation_rejects_query_events",
+                                    "passed":  true,
+                                    "duration_ms":  1889.794
+                                },
+                                {
+                                    "name":  "feedback",
+                                    "node":  "tests/integration/test_feedback_api.py::test_feedback_api_submits_recovers_and_updates_idempotently",
+                                    "passed":  true,
+                                    "duration_ms":  1905.385
+                                },
+                                {
+                                    "name":  "bad_case_review",
+                                    "node":  "tests/e2e/test_bad_case_review_flow.py::test_developer_review_to_verified_preserves_full_audit_chain",
+                                    "passed":  true,
+                                    "duration_ms":  1549.023
+                                },
+                                {
+                                    "name":  "retrieval_degradation",
+                                    "node":  "tests/unit/test_retrieval_service.py::test_hybrid_retrieval_degrades_when_graph_and_bm25_fail",
+                                    "passed":  true,
+                                    "duration_ms":  1233.424
+                                },
+                                {
+                                    "name":  "tool_governance",
+                                    "node":  "tests/unit/test_tool_governance.py::test_validation_and_service_failures_are_traced",
+                                    "passed":  true,
+                                    "duration_ms":  1200.363
+                                },
+                                {
+                                    "name":  "v2_startup_isolation",
+                                    "node":  "tests/integration/test_v2_startup_without_legacy.py::test_v2_container_startup_does_not_load_or_register_legacy",
+                                    "passed":  true,
+                                    "duration_ms":  2300.131
+                                },
+                                {
+                                    "name":  "mcp_recipe_search",
+                                    "node":  "tests/integration/test_mcp_tools.py::test_recipe_search_matches_local_tool_service_semantics",
+                                    "passed":  true,
+                                    "duration_ms":  1512.766
+                                },
+                                {
+                                    "name":  "v2_only_configuration",
+                                    "node":  "tests/integration/test_runtime_mode_switch.py::test_v2_is_the_only_runtime_mode",
+                                    "passed":  true,
+                                    "duration_ms":  1593.857
+                                }
+                            ]
+              },
+    "data_validation":  {
+                            "sqlite":  {
+                                           "path":  "D:\\ragdemo\\storage\\recipe_assistant.db",
+                                           "required_tables_present":  true,
+                                           "row_counts":  {
+                                                              "agent_run_traces":  1,
+                                                              "bad_case_candidates":  0,
+                                                              "chat_messages":  2,
+                                                              "chat_sessions":  1,
+                                                              "interaction_feedback":  0,
+                                                              "recipe_interactions":  0,
+                                                              "user_profiles":  0
+                                                          },
+                                           "interaction_types":  {
+
+                                                                 },
+                                           "query_consume_semantics":  "QUERY remains a distinct event type; API guard smoke passed"
+                                       },
+                            "chroma":  {
+                                           "path":  "D:\\ragdemo\\storage\\chroma_db",
+                                           "file_count":  17,
+                                           "bytes":  29606544
+                                       },
+                            "nutrition":  {
+                                              "path":  "D:\\ragdemo\\data\\nutrition\\recipes.json",
+                                              "recipe_count":  0,
+                                              "structure_valid":  true,
+                                              "coverage_status":  "empty_requires_import"
+                                          },
+                            "neo4j":  {
+                                          "enabled":  false,
+                                          "adapter_and_rebuild_sources_present":  true,
+                                          "live_connectivity_checked":  false,
+                                          "reason":  "disabled by default; Task20 has no external database dump"
+                                      }
+                        }
+}

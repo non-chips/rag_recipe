@@ -85,3 +85,25 @@ git worktree add ..\ragdemo-legacy archive/legacy-react-agent
 ## Task 20 自身回滚
 
 Task 20 只增加文档、备份脚本、Git 引用和忽略目录中的备份。回滚时可反向提交 Task 20 的跟踪文件；备份应保留到 Task 25 关闭迁移后再由人工清理。不要删除 `pre-legacy-decommission` 标签或 `archive/legacy-react-agent` 分支。
+
+## Task 24 删除提交
+
+按单批回滚：
+
+| 内容 | 提交 | 命令 |
+| --- | --- | --- |
+| 旧前端入口 | `1bc12fb` | `git revert 1bc12fb` |
+| 旧路由和 Tool | `7bc35fd` | `git revert 7bc35fd` |
+| ReactAgent 和主 Prompt | `fabd86b` | `git revert fabd86b` |
+| 兼容 Adapter/Harness | `cb18be4` | `git revert cb18be4` |
+| 旧回答 Facade | `1ec3a7a` | `git revert 1ec3a7a` |
+| 旧混合模型工厂 | `582de66` | `git revert 582de66` |
+
+整体恢复必须从最新提交开始按逆序执行。恢复后重新运行全量测试、环境检查和
+`scripts/final_smoke_test.ps1`，不得自动恢复流量。
+
+## Task 25 关闭材料
+
+Task25 只增加 Smoke、评测结果和迁移报告，不删除数据。若报告或脚本本身需要
+回滚，反向提交 Task25 的独立关闭提交即可；报告中记录的 SQLite/Chroma
+计数只是只读快照，不应用于覆盖当前数据。

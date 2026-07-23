@@ -1,0 +1,839 @@
+{
+  "schema_version": "task19-evaluation-v1",
+  "mode": "offline_deterministic",
+  "environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "python": "3.11.15"
+  },
+  "summary": {
+    "case_count": 41,
+    "passed": 41,
+    "failed": 0,
+    "pass_rate": 1.0,
+    "latency_ms": {
+      "p50": 0.011,
+      "p95": 0.355
+    },
+    "model_calls": 0,
+    "tool_calls": 9,
+    "fallback_count": 2
+  },
+  "domains": {
+    "bad_case": {
+      "case_count": 1,
+      "passed": 1,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "latency_ms": {
+        "p50": 5.36,
+        "p95": 5.36
+      },
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0
+    },
+    "business_routing": {
+      "case_count": 33,
+      "passed": 33,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "latency_ms": {
+        "p50": 0.011,
+        "p95": 0.021
+      },
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0
+    },
+    "feedback": {
+      "case_count": 1,
+      "passed": 1,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "latency_ms": {
+        "p50": 4.947,
+        "p95": 4.947
+      },
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0
+    },
+    "nutrition": {
+      "case_count": 2,
+      "passed": 2,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "latency_ms": {
+        "p50": 0.029,
+        "p95": 0.046
+      },
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 1
+    },
+    "recommendation": {
+      "case_count": 1,
+      "passed": 1,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "latency_ms": {
+        "p50": 0.033,
+        "p95": 0.033
+      },
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0
+    },
+    "retrieval": {
+      "case_count": 3,
+      "passed": 3,
+      "failed": 0,
+      "pass_rate": 1.0,
+      "latency_ms": {
+        "p50": 0.07,
+        "p95": 0.165
+      },
+      "model_calls": 0,
+      "tool_calls": 9,
+      "fallback_count": 1
+    }
+  },
+  "cases": [
+    {
+      "case_id": "business-routing-01",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.3553000005922513,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-02",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.021000001652282663,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-03",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.011299998732283711,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-04",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.0106999996205559,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-05",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.011599999197642319,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-06",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010199999451288022,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-07",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010400000974186696,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "SIMPLE"
+      }
+    },
+    {
+      "case_id": "business-routing-08",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.015599998732795939,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-09",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.011600001016631722,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-10",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010900001143454574,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-11",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.009999999747378752,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-12",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010799998563015833,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-13",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010800000382005237,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-14",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.009399998816661537,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_KNOWLEDGE"
+      }
+    },
+    {
+      "case_id": "business-routing-15",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010800000382005237,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-16",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.009800000043469481,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-17",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.00940000063565094,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-18",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.0106999996205559,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-19",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.009900000804918818,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-20",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.009800000043469481,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-21",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.00960000033956021,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "RECIPE_RECOMMENDATION"
+      }
+    },
+    {
+      "case_id": "business-routing-22",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010599998859106563,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "NUTRITION_PLANNING"
+      }
+    },
+    {
+      "case_id": "business-routing-23",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.012200000128359534,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "NUTRITION_PLANNING"
+      }
+    },
+    {
+      "case_id": "business-routing-24",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.01089999932446517,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "NUTRITION_PLANNING"
+      }
+    },
+    {
+      "case_id": "business-routing-25",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010599998859106563,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "NUTRITION_PLANNING"
+      }
+    },
+    {
+      "case_id": "business-routing-26",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010300000212737359,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "NUTRITION_PLANNING"
+      }
+    },
+    {
+      "case_id": "business-routing-27",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.011099999028374441,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "NUTRITION_PLANNING"
+      }
+    },
+    {
+      "case_id": "business-routing-28",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010199999451288022,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "COMPLEX"
+      }
+    },
+    {
+      "case_id": "business-routing-29",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.008999999408842996,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "COMPLEX"
+      }
+    },
+    {
+      "case_id": "business-routing-30",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.00920000093174167,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "COMPLEX"
+      }
+    },
+    {
+      "case_id": "business-routing-31",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.010900001143454574,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "COMPLEX"
+      }
+    },
+    {
+      "case_id": "business-routing-32",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.0090000012278324,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "COMPLEX"
+      }
+    },
+    {
+      "case_id": "business-routing-33",
+      "domain": "business_routing",
+      "passed": true,
+      "latency_ms": 0.0106999996205559,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "checks": {
+          "route": true,
+          "requires_weather": true,
+          "requires_meal_history": true,
+          "requires_multiple_experts": true
+        },
+        "actual_route": "COMPLEX"
+      }
+    },
+    {
+      "case_id": "retrieval-hybrid-success",
+      "domain": "retrieval",
+      "passed": true,
+      "latency_ms": 0.16460000006190967,
+      "model_calls": 0,
+      "tool_calls": 4,
+      "fallback_count": 0,
+      "details": {
+        "recipe_ids": [
+          "recipe-tomato-egg"
+        ],
+        "backend_calls": {
+          "graph": 1,
+          "chroma": 1,
+          "bm25": 1,
+          "graph_evidence": 1
+        },
+        "warnings": []
+      }
+    },
+    {
+      "case_id": "retrieval-vector-degrade",
+      "domain": "retrieval",
+      "passed": true,
+      "latency_ms": 0.0698000003467314,
+      "model_calls": 0,
+      "tool_calls": 4,
+      "fallback_count": 1,
+      "details": {
+        "recipe_ids": [
+          "recipe-tomato-egg"
+        ],
+        "backend_calls": {
+          "graph": 1,
+          "chroma": 1,
+          "bm25": 1,
+          "graph_evidence": 1
+        },
+        "warnings": [
+          "graph retrieval failed: fixture graph unavailable",
+          "bm25 retrieval failed: fixture bm25 unavailable"
+        ]
+      }
+    },
+    {
+      "case_id": "retrieval-bm25-only",
+      "domain": "retrieval",
+      "passed": true,
+      "latency_ms": 0.050999999075429514,
+      "model_calls": 0,
+      "tool_calls": 1,
+      "fallback_count": 0,
+      "details": {
+        "recipe_ids": [
+          "recipe-tomato-egg"
+        ],
+        "backend_calls": {
+          "bm25": 1
+        },
+        "warnings": []
+      }
+    },
+    {
+      "case_id": "recommendation-hard-filter-and-rank",
+      "domain": "recommendation",
+      "passed": true,
+      "latency_ms": 0.033099999200203456,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "accepted": [
+          "safe-fast"
+        ],
+        "top": "safe-fast",
+        "rejected": {
+          "allergen": [
+            "excluded_ingredient_conflict"
+          ]
+        }
+      }
+    },
+    {
+      "case_id": "nutrition-serving-and-coverage",
+      "domain": "nutrition",
+      "passed": true,
+      "latency_ms": 0.04640000042854808,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "calories": 200.0,
+        "coverage": 1.0,
+        "precise_metrics_available": true
+      }
+    },
+    {
+      "case_id": "nutrition-missing-data-degrades",
+      "domain": "nutrition",
+      "passed": true,
+      "latency_ms": 0.029499999072868377,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 1,
+      "details": {
+        "calories": 300.0,
+        "coverage": 0.5,
+        "precise_metrics_available": false
+      }
+    },
+    {
+      "case_id": "feedback-idempotent-submit",
+      "domain": "feedback",
+      "passed": true,
+      "latency_ms": 4.947399998854962,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "feedback_id": 1,
+        "row_count": 1
+      }
+    },
+    {
+      "case_id": "bad-case-strong-signal-deduplication",
+      "domain": "bad_case",
+      "passed": true,
+      "latency_ms": 5.359600001611398,
+      "model_calls": 0,
+      "tool_calls": 0,
+      "fallback_count": 0,
+      "details": {
+        "score": 1.0,
+        "candidate_count": 1,
+        "occurrence_count": 2
+      }
+    }
+  ],
+  "limitations": [
+    "No production LLM or remote data source is called by this baseline.",
+    "Latency is a local service baseline, not a production capacity claim."
+  ]
+}

@@ -29,13 +29,15 @@
 | 22 | DONE | `3550960` | 默认切换专项：10 passed；完整回归：154 passed；Ruff：通过；Windows 环境检查：通过；观测回放：120/120 | 默认 Runtime 已切换 V2；Task 23 将在线回滚入口进一步隔离；未删除旧代码 |
 | 23 | DONE | `683b1ff` | 零调用专项：3 passed；完整回归：158 passed；静态扫描：正常 Runtime 禁止引用 0；Ruff/compileall：通过 | 容器不再注册旧适配器；development/test/production 均只允许 V2；旧文件与历史回归证据仍保留 |
 | 24 | DONE | `1bc12fb`、`7bc35fd`、`fabd86b`、`cb18be4`、`1ec3a7a`、`582de66` | 每批完整回归：158 passed；每批 Ruff/compileall：通过；最终环境检查：通过 | 旧入口、路由、Tool、Agent、Adapter、回答 Facade 和混合模型工厂已分批删除；底层检索、图、天气、metadata 与全部数据保留 |
+| 25 | DONE | Task25 独立关闭提交 | 完整回归：158 passed；离线评测：41/41；最终 Smoke：15/15；Ruff/compileall/环境检查：通过 | 旧业务迁移正式关闭；营养目录 0 条、Neo4j 默认关闭且无外部 dump，作为运维风险保留 |
 
 状态只允许：`TODO`、`IN_PROGRESS`、`BLOCKED`、`DONE`。
 
 ## 当前阻塞
 
-- 无阻止进入 Task 25 的代码门禁失败；Task 24 分批删除验收已完成。
-- Task 20 已备份 Neo4j 可重建材料，但没有外部 Neo4j 数据库 dump；启用 Neo4j 的环境在任何清库或重建前必须补充一致性 dump。
+- Task20—25 全部 DONE；旧业务代码迁移已关闭。
+- 外部 Neo4j 仍无 database dump；启用环境在任何清库或重建前必须补充一致性 dump。
+- 营养目录结构有效但当前为 0 条；精确营养能力上线前必须导入可信数据并重跑评测。
 - 默认 FastAPI 与 V2 测试只使用新链路；Task 24 删除清单与回滚点已形成审计报告。
 
 ## 关键架构决策
