@@ -245,26 +245,41 @@ class NutritionPlanningExpert(BaseExpert):
     @staticmethod
     def _latest(
         board: CollaborationBlackboard,
+        task_id: str,
         kind: ArtifactKind,
         schema: type[BaseModel],
     ) -> BaseModel:
-        artifacts = board.artifacts_for(kind=kind)
-        if not artifacts:
-            raise ValueError(f"required artifact is missing: {kind.value}")
-        return schema.model_validate(artifacts[-1].payload)
+        artifact = board.artifact_for(task_id=task_id, kind=kind)
+        if artifact is None:
+            raise ValueError(f"required artifact is missing: {task_id}/{kind.value}")
+        return schema.model_validate(artifact.payload)
 
     def _history(self, board: CollaborationBlackboard) -> ConfirmedMealHistory:
-        value = self._latest(board, ArtifactKind.MEAL_HISTORY, ConfirmedMealHistory)
+        value = self._latest(
+            board,
+            "nutrition.meal_history",
+            ArtifactKind.MEAL_HISTORY,
+            ConfirmedMealHistory,
+        )
         assert isinstance(value, ConfirmedMealHistory)
         return value
 
     def _summary(self, board: CollaborationBlackboard) -> NutritionSummary:
-        value = self._latest(board, ArtifactKind.NUTRITION_SUMMARY, NutritionSummary)
+        value = self._latest(
+            board,
+            "nutrition.summary",
+            ArtifactKind.NUTRITION_SUMMARY,
+            NutritionSummary,
+        )
         assert isinstance(value, NutritionSummary)
         return value
 
     def _goal(self, board: CollaborationBlackboard) -> NutritionGoal:
-        value = self._latest(board, ArtifactKind.NUTRITION_GOAL, NutritionGoal)
+        value = self._latest(
+            board,
+            "nutrition.guidance",
+            ArtifactKind.NUTRITION_GOAL,
+            NutritionGoal,
+        )
         assert isinstance(value, NutritionGoal)
         return value
-

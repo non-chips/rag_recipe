@@ -8,7 +8,12 @@ from typing import ClassVar
 from pydantic import BaseModel, ConfigDict
 
 from recipe_assistant.agents.blackboard import CollaborationBlackboard
-from recipe_assistant.agents.events import AgentArtifact, AgentTask, ExpertCapability
+from recipe_assistant.agents.events import (
+    AgentArtifact,
+    AgentTask,
+    ClaimDecision,
+    ExpertCapability,
+)
 from recipe_assistant.tools.context import ToolContext
 from recipe_assistant.tools.registry import ToolRegistry
 
@@ -28,6 +33,26 @@ class BaseExpert(ABC):
     def __init__(self, tool_registry: ToolRegistry) -> None:
         self.tool_registry = tool_registry
 
+    def decide(
+        self,
+        task: AgentTask,
+        blackboard: CollaborationBlackboard,
+    ) -> ClaimDecision:
+        """Provide the default capability-based claim without executing tools."""
+
+        del blackboard
+        accepted = task.capability in self.capabilities
+        return ClaimDecision(
+            expert_name=self.name,
+            accepted=accepted,
+            confidence=1.0 if accepted else 0.0,
+            reason=(
+                f"{self.name} declares capability {task.capability.value}"
+                if accepted
+                else ""
+            ),
+        )
+
     @abstractmethod
     def execute(
         self,
@@ -46,4 +71,3 @@ class BaseExpert(ABC):
 
     def artifact_id(self, blackboard: CollaborationBlackboard, task: AgentTask) -> str:
         return f"{blackboard.run_id}:{task.id}"
-

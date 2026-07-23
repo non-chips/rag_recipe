@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse
 
 from recipe_assistant.agents.result import ChatRequest
 from recipe_assistant.api.dependencies import ApiContainer, get_container, get_user_id
-from recipe_assistant.api.sse import encode_sse, token_chunks
+from recipe_assistant.api.sse import encode_sse
 from recipe_assistant.schemas.api import (
     ChatStreamRequest,
     DoneEvent,
@@ -55,11 +55,21 @@ def stream_chat(
                     route=result.route.value,
                 )
             )
-            yield encode_sse(StatusEvent(stage="completed", message="回答已生成"))
+            stages = (
+                ("routing", "请求路由已完成"),
+                ("context", "上下文已准备"),
+                ("retrieval", "信息检索已完成"),
+                ("validation", "约束校验已完成"),
+                ("generating", "回答提案已生成"),
+                ("reviewing", "回答审核已完成"),
+            )
+            for stage, message in stages:
+                yield encode_sse(StatusEvent(stage=stage, message=message))
             for source in result.outcome.result.sources:
                 yield encode_sse(SourceEvent(source=source))
-            for chunk in token_chunks(result.content):
-                yield encode_sse(TokenEvent(content=chunk))
+            for token in result.outcome.result.streamed_tokens:
+                yield encode_sse(TokenEvent(content=token))
+            yield encode_sse(StatusEvent(stage="completed", message="回答已生成"))
             yield encode_sse(
                 DoneEvent(
                     message_id=result.assistant_message_id,

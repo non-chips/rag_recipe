@@ -255,30 +255,41 @@ class RecipeKnowledgeExpert(BaseExpert):
     @staticmethod
     def _latest_payload(
         board: CollaborationBlackboard,
+        task_id: str,
         kind: ArtifactKind,
         schema: type[ExpertPayload],
     ) -> ExpertPayload:
-        artifacts = board.artifacts_for(kind=kind)
-        if not artifacts:
-            raise ValueError(f"required artifact is missing: {kind.value}")
-        return schema.model_validate(artifacts[-1].payload)
+        artifact = board.artifact_for(task_id=task_id, kind=kind)
+        if artifact is None:
+            raise ValueError(f"required artifact is missing: {task_id}/{kind.value}")
+        return schema.model_validate(artifact.payload)
 
     def _constraints(self, board: CollaborationBlackboard) -> KnowledgeConstraints:
-        payload = self._latest_payload(board, ArtifactKind.QUERY_CONSTRAINTS, KnowledgeConstraints)
+        payload = self._latest_payload(
+            board,
+            "knowledge.extract_constraints",
+            ArtifactKind.QUERY_CONSTRAINTS,
+            KnowledgeConstraints,
+        )
         assert isinstance(payload, KnowledgeConstraints)
         return payload
 
     def _evidence(self, board: CollaborationBlackboard) -> RecipeEvidence:
-        payload = self._latest_payload(board, ArtifactKind.RECIPE_EVIDENCE, RecipeEvidence)
+        payload = self._latest_payload(
+            board,
+            "knowledge.retrieve",
+            ArtifactKind.RECIPE_EVIDENCE,
+            RecipeEvidence,
+        )
         assert isinstance(payload, RecipeEvidence)
         return payload
 
     def _validation(self, board: CollaborationBlackboard) -> EvidenceValidation:
         payload = self._latest_payload(
             board,
+            "knowledge.evidence_check",
             ArtifactKind.CONSTRAINT_VALIDATION,
             EvidenceValidation,
         )
         assert isinstance(payload, EvidenceValidation)
         return payload
-

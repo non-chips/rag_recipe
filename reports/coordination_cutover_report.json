@@ -1,0 +1,317 @@
+{
+  "schema_version": "coordination-cutover-v1",
+  "methodology": {
+    "mode": "offline_deterministic_fixture",
+    "case_count": 8,
+    "case_ids": [
+      "knowledge_grounded",
+      "knowledge_ungrounded",
+      "recommendation_safe",
+      "recommendation_allergen",
+      "recommendation_weather",
+      "recommendation_weather_failure",
+      "recommendation_unsafe",
+      "nutrition"
+    ],
+    "latency_note": "Common domain tasks include a 10ms deterministic I/O fixture.",
+    "tool_call_note": "Offline tool_calls is the deterministic domain-execution count proxy; live ToolRegistry calls remain available in tool trace."
+  },
+  "modes": {
+    "fixed": {
+      "metrics": {
+        "case_pass_rate": 0.625,
+        "hard_constraint_violations": 1,
+        "ungrounded_fact_rate": 0.125,
+        "latency_ms": {
+          "p50": 52.999,
+          "p95": 63.636
+        },
+        "tool_calls": 40,
+        "degradation_rate": 0.125,
+        "bad_case_hit_rate": 0.0,
+        "bad_case_traceability": 1.0,
+        "infinite_loops": 0
+      },
+      "cases": [
+        {
+          "id": "knowledge_grounded",
+          "category": "qa",
+          "passed": true,
+          "latency_ms": 42.632,
+          "tool_calls": 4,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 17
+        },
+        {
+          "id": "knowledge_ungrounded",
+          "category": "no_evidence",
+          "passed": false,
+          "latency_ms": 42.181,
+          "tool_calls": 4,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 1,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 17
+        },
+        {
+          "id": "recommendation_safe",
+          "category": "recommendation",
+          "passed": true,
+          "latency_ms": 63.366,
+          "tool_calls": 6,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 25
+        },
+        {
+          "id": "recommendation_allergen",
+          "category": "allergen",
+          "passed": false,
+          "latency_ms": 63.536,
+          "tool_calls": 6,
+          "degraded": false,
+          "hard_constraint_violations": 1,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 25
+        },
+        {
+          "id": "recommendation_weather",
+          "category": "weather",
+          "passed": true,
+          "latency_ms": 73.02,
+          "tool_calls": 7,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 29
+        },
+        {
+          "id": "recommendation_weather_failure",
+          "category": "tool_degradation",
+          "passed": true,
+          "latency_ms": 31.583,
+          "tool_calls": 3,
+          "degraded": true,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "ERROR",
+          "event_count": 21
+        },
+        {
+          "id": "recommendation_unsafe",
+          "category": "food_safety",
+          "passed": false,
+          "latency_ms": 63.636,
+          "tool_calls": 6,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 25
+        },
+        {
+          "id": "nutrition",
+          "category": "nutrition",
+          "passed": true,
+          "latency_ms": 42.029,
+          "tool_calls": 4,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PLAN",
+          "event_count": 17
+        }
+      ]
+    },
+    "collaborative": {
+      "metrics": {
+        "case_pass_rate": 1.0,
+        "hard_constraint_violations": 0,
+        "ungrounded_fact_rate": 0.0,
+        "latency_ms": {
+          "p50": 65.204,
+          "p95": 76.033
+        },
+        "tool_calls": 44,
+        "degradation_rate": 0.375,
+        "bad_case_hit_rate": 0.25,
+        "bad_case_traceability": 1.0,
+        "infinite_loops": 0
+      },
+      "cases": [
+        {
+          "id": "knowledge_grounded",
+          "category": "qa",
+          "passed": true,
+          "latency_ms": 43.207,
+          "tool_calls": 4,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PROPOSAL",
+          "event_count": 33
+        },
+        {
+          "id": "knowledge_ungrounded",
+          "category": "no_evidence",
+          "passed": true,
+          "latency_ms": 45.274,
+          "tool_calls": 4,
+          "degraded": true,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 1,
+          "bad_case_traced": 1,
+          "infinite_loop": 0,
+          "final_kind": "ERROR",
+          "event_count": 46
+        },
+        {
+          "id": "recommendation_safe",
+          "category": "recommendation",
+          "passed": true,
+          "latency_ms": 65.179,
+          "tool_calls": 6,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PROPOSAL",
+          "event_count": 43
+        },
+        {
+          "id": "recommendation_allergen",
+          "category": "allergen",
+          "passed": true,
+          "latency_ms": 65.229,
+          "tool_calls": 6,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PROPOSAL",
+          "event_count": 55
+        },
+        {
+          "id": "recommendation_weather",
+          "category": "weather",
+          "passed": true,
+          "latency_ms": 76.033,
+          "tool_calls": 7,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PROPOSAL",
+          "event_count": 48
+        },
+        {
+          "id": "recommendation_weather_failure",
+          "category": "tool_degradation",
+          "passed": true,
+          "latency_ms": 76.649,
+          "tool_calls": 7,
+          "degraded": true,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PROPOSAL",
+          "event_count": 49
+        },
+        {
+          "id": "recommendation_unsafe",
+          "category": "food_safety",
+          "passed": true,
+          "latency_ms": 66.943,
+          "tool_calls": 6,
+          "degraded": true,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 1,
+          "bad_case_traced": 1,
+          "infinite_loop": 0,
+          "final_kind": "ERROR",
+          "event_count": 56
+        },
+        {
+          "id": "nutrition",
+          "category": "nutrition",
+          "passed": true,
+          "latency_ms": 44.512,
+          "tool_calls": 4,
+          "degraded": false,
+          "hard_constraint_violations": 0,
+          "ungrounded_facts": 0,
+          "expected_bad_case": 0,
+          "bad_case_traced": 0,
+          "infinite_loop": 0,
+          "final_kind": "RESPONSE_PROPOSAL",
+          "event_count": 33
+        }
+      ]
+    }
+  },
+  "comparison": {
+    "collaborative_to_fixed_p95_ratio": 1.194811
+  },
+  "gates": {
+    "critical_cases_100_percent": true,
+    "hard_constraint_violations_zero": true,
+    "ungrounded_fact_rate_not_worse": true,
+    "p95_latency_within_1_25x": true,
+    "infinite_loops_zero": true,
+    "bad_case_traceability_100_percent": true
+  },
+  "cutover_approved": true,
+  "decommission": {
+    "default_mode": "collaborative",
+    "fixed_deletion_approved": false,
+    "blockers": [
+      "Task 01-05 worktree has no new committed backup/tag.",
+      "Production zero-fixed-traffic observation period is not yet available."
+    ]
+  }
+}

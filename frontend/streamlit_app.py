@@ -36,6 +36,7 @@ def stream_chat(message: str, session_id: str | None) -> Iterator[str]:
     )
     response.raise_for_status()
     event_name = ""
+    received_token = False
     for raw_line in response.iter_lines(decode_unicode=True):
         line = raw_line.strip()
         if not line:
@@ -51,10 +52,15 @@ def stream_chat(message: str, session_id: str | None) -> Iterator[str]:
         if event_type == "meta":
             st.session_state["session_id"] = event["sessionId"]
             st.session_state["response_run_id"] = event["runId"]
+        elif event_type == "status":
+            st.session_state["response_stage"] = str(event.get("stage", ""))
         elif event_type == "token":
+            received_token = True
             yield str(event.get("content", ""))
         elif event_type == "done":
             st.session_state["response_message_id"] = event["messageId"]
+            if not received_token:
+                yield str(event.get("content", ""))
         elif event_type == "error":
             yield f"\n\n请求失败：{event.get('message', '未知错误')}"
 

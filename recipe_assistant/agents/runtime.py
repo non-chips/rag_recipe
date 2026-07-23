@@ -1,7 +1,11 @@
 """Thin runtime assembling a blackboard and deterministic coordinator."""
 
 from recipe_assistant.agents.blackboard import CollaborationBlackboard
-from recipe_assistant.agents.coordinator import CoordinatorOutcome, RecipeCoordinator
+from recipe_assistant.agents.coordinator import (
+    CollaborativeRecipeCoordinator,
+    CoordinatorOutcome,
+    RecipeCoordinator,
+)
 from recipe_assistant.agents.result import RunContext
 from recipe_assistant.schemas.agent.route import RouteDecision
 
@@ -9,6 +13,11 @@ from recipe_assistant.schemas.agent.route import RouteDecision
 class RecipeAgentRuntime:
     def __init__(self, coordinator: RecipeCoordinator) -> None:
         self.coordinator = coordinator
+        self.coordination_mode = (
+            "collaborative"
+            if isinstance(coordinator, CollaborativeRecipeCoordinator)
+            else "fixed"
+        )
 
     def run(
         self,

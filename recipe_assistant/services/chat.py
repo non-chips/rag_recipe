@@ -12,6 +12,7 @@ from recipe_assistant.agents.result import (
     HarnessOutcome,
     RunContext,
 )
+from recipe_assistant.agents.events import thaw_value
 from recipe_assistant.core.database import session_scope
 from recipe_assistant.models import MessageRole
 from recipe_assistant.repositories.sqlite import (
@@ -20,8 +21,10 @@ from recipe_assistant.repositories.sqlite import (
     SqlAlchemyTraceRepository,
 )
 from recipe_assistant.services.memory import MemoryService
+from recipe_assistant.services.bad_case import BadCaseService
 from recipe_assistant.services.profile import ProfileService
 from recipe_assistant.services.trace import TraceService
+from recipe_assistant.schemas.feedback import BadCaseEvaluationRequest, ToneSignal
 
 
 class ChatHarness(Protocol):
@@ -86,6 +89,8 @@ class ChatService:
             TraceService(SqlAlchemyTraceRepository(session)).save(outcome)
             assistant_message_id = assistant_message.id
 
+        self._submit_quality_bad_case(context, outcome)
+
         return ChatServiceResult(
             run_id=context.run_id,
             session_public_id=context.session_public_id,
@@ -95,3 +100,55 @@ class ChatService:
             content=outcome.result.final_text,
             outcome=outcome,
         )
+
+    def _submit_quality_bad_case(
+        self,
+        context: RunContext,
+        outcome: HarnessOutcome,
+    ) -> None:
+        """Submit exhausted quality revisions without blocking the user response."""
+
+        candidates = [
+            event
+            for event in outcome.result.events
+            if event.get("event_type") == "BAD_CASE_CANDIDATE"
+        ]
+        if not candidates:
+            return
+        metadata = candidates[-1].get("metadata") or {}
+        try:
+            BadCaseService(self.session_factory).evaluate(
+                BadCaseEvaluationRequest(
+                    user_id=context.user_id,
+                    run_id=context.run_id,
+                    session_id=context.session_id,
+                    normalized_request=context.normalized_input,
+                    tone_signal=ToneSignal(
+                        possible_frustration=0.0,
+                        possible_impatience=0.0,
+                        possible_dissatisfaction=0.0,
+                        repeated_request=False,
+                        repeated_constraint=False,
+                        requested_retry=False,
+                        explicit_error_reported=False,
+                        confidence=1.0,
+                    ),
+                    hard_constraint_violations=tuple(
+                        str(item)
+                        for item in metadata.get(
+                            "hard_constraint_violations",
+                            (),
+                        )
+                    ),
+                    trace_snapshot=thaw_value(
+                        {
+                            "route": outcome.route_decision.route.value,
+                            "events": outcome.result.events,
+                        }
+                    ),
+                )
+            )
+        except Exception:
+            # Bad-case analysis is an observability side effect and must never
+            # replace or delay the already-persisted student-facing answer.
+            return

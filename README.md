@@ -25,6 +25,7 @@ API 默认地址为 `http://127.0.0.1:8000`，Streamlit 默认地址为
 
 ```dotenv
 AGENT_RUNTIME_MODE=v2
+AGENT_COORDINATION_MODE=collaborative
 LEGACY_FALLBACK_ENABLED=false
 ```
 

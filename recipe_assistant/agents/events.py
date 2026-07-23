@@ -16,9 +16,13 @@ class ExpertCapability(str, Enum):
     RECIPE_KNOWLEDGE = "RECIPE_KNOWLEDGE"
     RECIPE_RECOMMENDATION = "RECIPE_RECOMMENDATION"
     NUTRITION_PLANNING = "NUTRITION_PLANNING"
+    RESPONSE_GENERATION = "RESPONSE_GENERATION"
+    QUALITY_REVIEW = "QUALITY_REVIEW"
 
 
 class TaskStatus(str, Enum):
+    OPEN = "OPEN"
+    CLAIMED = "CLAIMED"
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCEEDED = "SUCCEEDED"
@@ -46,21 +50,54 @@ class ArtifactKind(str, Enum):
     CONSTRAINT_VALIDATION = "CONSTRAINT_VALIDATION"
     REPORT_DRAFT = "REPORT_DRAFT"
     RESPONSE_PLAN = "RESPONSE_PLAN"
+    RESPONSE_PROPOSAL = "RESPONSE_PROPOSAL"
+    REVIEW = "REVIEW"
+    CRITIQUE = "CRITIQUE"
+    REVISION = "REVISION"
     FINAL_RESPONSE = "FINAL_RESPONSE"
     ERROR = "ERROR"
 
 
 class EventType(str, Enum):
     TASK_ADDED = "TASK_ADDED"
+    TASK_OPENED = "TASK_OPENED"
+    TASK_CLAIMED = "TASK_CLAIMED"
+    NO_CLAIM = "NO_CLAIM"
     TASK_STARTED = "TASK_STARTED"
     TASK_COMPLETED = "TASK_COMPLETED"
     TASK_FAILED = "TASK_FAILED"
     TASK_SKIPPED = "TASK_SKIPPED"
     ARTIFACT_ADDED = "ARTIFACT_ADDED"
+    ARTIFACT_REVIEWED = "ARTIFACT_REVIEWED"
+    REVISION_REQUESTED = "REVISION_REQUESTED"
     FINAL_SELECTED = "FINAL_SELECTED"
+    FINAL_ACCEPTED = "FINAL_ACCEPTED"
+    BAD_CASE_CANDIDATE = "BAD_CASE_CANDIDATE"
     DEGRADED = "DEGRADED"
+    FALLBACK_APPLIED = "FALLBACK_APPLIED"
     BUDGET_EXHAUSTED = "BUDGET_EXHAUSTED"
+    ROUND_LIMIT_REACHED = "ROUND_LIMIT_REACHED"
     MISSING_ARTIFACT = "MISSING_ARTIFACT"
+
+
+@dataclass(frozen=True, slots=True)
+class ClaimDecision:
+    """One expert's immutable decision to claim an open task."""
+
+    expert_name: str
+    accepted: bool
+    confidence: float
+    reason: str
+    metadata: Mapping[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if not self.expert_name:
+            raise ValueError("claim expert_name must be non-empty")
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError("claim confidence must be between 0 and 1")
+        if self.accepted and not self.reason:
+            raise ValueError("accepted claim reason must be non-empty")
+        object.__setattr__(self, "metadata", freeze_value(self.metadata))
 
 
 def freeze_value(value: Any) -> Any:
@@ -80,7 +117,7 @@ def thaw_value(value: Any) -> Any:
 
     if isinstance(value, Mapping):
         return {str(key): thaw_value(item) for key, item in value.items()}
-    if isinstance(value, tuple):
+    if isinstance(value, (list, tuple)):
         return [thaw_value(item) for item in value]
     if isinstance(value, frozenset):
         return sorted(thaw_value(item) for item in value)
@@ -102,12 +139,31 @@ class AgentTask:
     expected_artifacts: tuple[ArtifactKind, ...] = ()
     estimated_cost: int = 1
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    claimed_by: str = ""
+    claim_confidence: float | None = None
+    claim_reason: str = ""
+    revision_of: str = ""
 
     def __post_init__(self) -> None:
         if not self.id or not self.title:
             raise ValueError("task id and title must be non-empty")
         if self.estimated_cost < 1:
             raise ValueError("task estimated_cost must be positive")
+        if self.claim_confidence is not None and not 0.0 <= self.claim_confidence <= 1.0:
+            raise ValueError("task claim_confidence must be between 0 and 1")
+        if self.status in {
+            TaskStatus.CLAIMED,
+            TaskStatus.RUNNING,
+            TaskStatus.SUCCEEDED,
+            TaskStatus.FAILED,
+            TaskStatus.SKIPPED,
+        } and self.claimed_by:
+            if not self.claimed_by or self.claim_confidence is None or not self.claim_reason:
+                raise ValueError("claimed task must include claimant, confidence and reason")
+        elif self.status is TaskStatus.CLAIMED:
+            raise ValueError("claimed task must include claimant, confidence and reason")
+        elif self.claimed_by or self.claim_confidence is not None or self.claim_reason:
+            raise ValueError("claim fields must describe a claimed task")
         object.__setattr__(self, "depends_on", tuple(self.depends_on))
         object.__setattr__(self, "expected_artifacts", tuple(self.expected_artifacts))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
@@ -123,6 +179,8 @@ class AgentArtifact:
     task_id: str
     created_at: datetime = field(default_factory=utc_now)
     metadata: Mapping[str, Any] = field(default_factory=dict)
+    review_of: str = ""
+    revision_of: str = ""
 
     def __post_init__(self) -> None:
         if not self.id or not self.owner or not self.task_id:
@@ -131,6 +189,8 @@ class AgentArtifact:
             raise ValueError("artifact confidence must be between 0 and 1")
         if self.created_at.tzinfo is None or self.created_at.utcoffset() is None:
             raise ValueError("artifact created_at must be timezone-aware")
+        if self.id in {self.review_of, self.revision_of}:
+            raise ValueError("artifact cannot review or revise itself")
         object.__setattr__(self, "payload", freeze_value(self.payload))
         object.__setattr__(self, "metadata", freeze_value(self.metadata))
 

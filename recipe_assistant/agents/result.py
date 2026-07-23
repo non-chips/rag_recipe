@@ -71,6 +71,7 @@ class AgentRunResult(BaseModel):
     events: list[dict[str, Any]] = Field(default_factory=list)
     sources: list[dict[str, Any]] = Field(default_factory=list)
     token_usage: dict[str, Any] = Field(default_factory=dict)
+    streamed_tokens: list[str] = Field(default_factory=list)
     used_legacy_executor: bool = False
     error: str | None = None
 

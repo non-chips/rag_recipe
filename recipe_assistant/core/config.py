@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     log_level: str = "INFO"
     agent_runtime_mode: Literal["v2"] = "v2"
+    agent_coordination_mode: Literal["fixed", "collaborative"] = "collaborative"
     legacy_fallback_enabled: bool = False
 
     chat_enabled: bool = True

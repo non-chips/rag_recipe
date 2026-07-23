@@ -33,7 +33,15 @@ class MetaEvent(SseEvent):
 
 class StatusEvent(SseEvent):
     type: Literal["status"] = "status"
-    stage: str
+    stage: Literal[
+        "routing",
+        "context",
+        "retrieval",
+        "validation",
+        "generating",
+        "reviewing",
+        "completed",
+    ]
     message: str
 
 
@@ -73,4 +81,3 @@ class ChatStreamRequest(BaseModel):
 
 
 ChatSseEvent = MetaEvent | StatusEvent | TokenEvent | SourceEvent | DoneEvent | ErrorEvent
-

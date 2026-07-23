@@ -46,6 +46,7 @@ class ApiContainer:
         harness = build_runtime_harness(
             resolved_settings,
             session_factory,
+            coordination_mode=resolved_settings.agent_coordination_mode,
         )
         catalog_path = Path(PROJECT_ROOT) / "data" / "nutrition" / "recipes.json"
         catalog = (

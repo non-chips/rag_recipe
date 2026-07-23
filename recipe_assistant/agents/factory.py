@@ -7,17 +7,22 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from threading import Lock
 from time import perf_counter
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, sessionmaker
 
-from recipe_assistant.agents.coordinator import CoordinatorOutcome, RecipeCoordinator
+from recipe_assistant.agents.coordinator import (
+    CollaborativeRecipeCoordinator,
+    CoordinatorOutcome,
+    RecipeCoordinator,
+)
 from recipe_assistant.agents.events import (
     AgentArtifact,
     ArtifactKind,
+    ClaimDecision,
     ExpertCapability,
     thaw_value,
 )
@@ -92,7 +97,13 @@ class _RuntimeExpertDispatcher:
     """Delegate normal tasks and bridge the existing deterministic COMPLEX template."""
 
     name = "multi_expert_runtime_dispatcher"
-    capabilities = frozenset(ExpertCapability)
+    capabilities = frozenset(
+        {
+            ExpertCapability.RECIPE_KNOWLEDGE,
+            ExpertCapability.RECIPE_RECOMMENDATION,
+            ExpertCapability.NUTRITION_PLANNING,
+        }
+    )
 
     def __init__(
         self,
@@ -110,6 +121,20 @@ class _RuntimeExpertDispatcher:
         self.preference_provider = preference_provider
         self.weather_service = weather_service
         self.constraint_service = ConstraintService()
+
+    def decide(self, task, board) -> ClaimDecision:
+        del board
+        accepted = task.capability in self.capabilities
+        return ClaimDecision(
+            expert_name=self.name,
+            accepted=accepted,
+            confidence=1.0 if accepted else 0.0,
+            reason=(
+                f"{self.name} dispatches capability {task.capability.value}"
+                if accepted
+                else ""
+            ),
+        )
 
     def execute(self, task, board):
         if not task.id.startswith("complex."):
@@ -224,17 +249,23 @@ class _RuntimeExpertDispatcher:
 
     @staticmethod
     def _candidate_set(board) -> CandidateSet:
-        artifacts = board.artifacts_for(kind=ArtifactKind.RECIPE_CANDIDATES)
-        if not artifacts:
+        artifact = board.artifact_for(
+            task_id="complex.recipe_candidates",
+            kind=ArtifactKind.RECIPE_CANDIDATES,
+        )
+        if artifact is None:
             raise ValueError("complex runtime has no recipe candidates")
-        return CandidateSet.model_validate(artifacts[-1].payload)
+        return CandidateSet.model_validate(artifact.payload)
 
     @staticmethod
     def _validation(board) -> ConstraintValidationResult:
-        artifacts = board.artifacts_for(kind=ArtifactKind.CONSTRAINT_VALIDATION)
-        if not artifacts:
+        artifact = board.artifact_for(
+            task_id="complex.validate",
+            kind=ArtifactKind.CONSTRAINT_VALIDATION,
+        )
+        if artifact is None:
             raise ValueError("complex runtime has no constraint validation")
-        return ConstraintValidationResult.model_validate(artifacts[-1].payload)
+        return ConstraintValidationResult.model_validate(artifact.payload)
 
 
 class ArtifactResponseRenderer:
@@ -367,16 +398,27 @@ class MultiExpertHarness:
             return response.message, [], [
                 {"type": "simple_chat", "category": response.category.value}
             ]
-        outcome = self.runtime_provider().run(context, decision)
+        runtime = self.runtime_provider()
+        outcome = runtime.run(context, decision)
         text, sources = self.renderer.render(outcome)
         return text, sources, [
-            {"type": "v2_runtime", "status": outcome.status.value},
+            {
+                "type": "v2_runtime",
+                "status": outcome.status.value,
+                "coordination_mode": getattr(
+                    runtime,
+                    "coordination_mode",
+                    "fixed",
+                ),
+            },
             *outcome.blackboard.trace_events(),
         ]
 
 def build_multi_expert_runtime(
     settings: Settings,
     session_factory: sessionmaker[Session],
+    *,
+    coordination_mode: Literal["fixed", "collaborative"] | None = None,
 ) -> RecipeAgentRuntime:
     retrieval_overrides: dict[str, Any] = {}
     if not settings.neo4j_enabled:
@@ -458,7 +500,20 @@ def build_multi_expert_runtime(
         preference_provider,
         weather_service,
     )
-    return RecipeAgentRuntime(RecipeCoordinator(ExpertRegistry([dispatcher])))
+    resolved_coordination_mode = (
+        coordination_mode or settings.agent_coordination_mode
+    )
+    coordinator_types = {
+        "fixed": RecipeCoordinator,
+        "collaborative": CollaborativeRecipeCoordinator,
+    }
+    try:
+        coordinator_type = coordinator_types[resolved_coordination_mode]
+    except KeyError as exc:
+        raise ValueError(
+            "coordination_mode must be 'fixed' or 'collaborative'"
+        ) from exc
+    return RecipeAgentRuntime(coordinator_type(ExpertRegistry([dispatcher])))
 
 
 def build_runtime_harness(
@@ -466,9 +521,14 @@ def build_runtime_harness(
     session_factory: sessionmaker[Session],
     *,
     runtime_provider: RuntimeProvider | None = None,
+    coordination_mode: Literal["fixed", "collaborative"] | None = None,
 ) -> MultiExpertHarness:
     provider = runtime_provider or LazyRuntimeProvider(
-        lambda: build_multi_expert_runtime(settings, session_factory)
+        lambda: build_multi_expert_runtime(
+            settings,
+            session_factory,
+            coordination_mode=coordination_mode,
+        )
     )
     return MultiExpertHarness(
         runtime_provider=provider,

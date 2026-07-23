@@ -11,6 +11,7 @@ from recipe_assistant.agents.events import (
     AgentEvent,
     AgentTask,
     ArtifactKind,
+    ClaimDecision,
     EventType,
     ExpertCapability,
     TaskStatus,
@@ -32,11 +33,12 @@ def _board() -> CollaborationBlackboard:
     )
 
 
-def _task() -> AgentTask:
+def _task(*, status: TaskStatus = TaskStatus.PENDING) -> AgentTask:
     return AgentTask(
         id="knowledge.retrieve",
         title="RetrieveRecipeKnowledge",
         capability=ExpertCapability.RECIPE_KNOWLEDGE,
+        status=status,
         expected_artifacts=(ArtifactKind.RECIPE_EVIDENCE,),
     )
 
@@ -117,3 +119,90 @@ def test_route_and_event_metadata_are_immutable_and_traceable() -> None:
     trace = board.trace_events()[0]
     assert trace["sequence"] == 1
     assert trace["metadata"] == {"nested": {"items": [1, 2]}}
+
+
+def test_open_task_can_be_claimed_once_with_auditable_fields() -> None:
+    original = _board().add_task(_task(status=TaskStatus.OPEN))
+    metadata = {"signals": ["capability", "availability"]}
+    claimed = original.claim_task(
+        _task().id,
+        ClaimDecision(
+            expert_name="knowledge",
+            accepted=True,
+            confidence=0.93,
+            reason="knowledge capability and required evidence tools are available",
+            metadata=metadata,
+        ),
+    )
+    metadata["signals"].append("mutated")
+
+    assert original.tasks[_task().id].status is TaskStatus.OPEN
+    task = claimed.tasks[_task().id]
+    assert task.status is TaskStatus.CLAIMED
+    assert task.claimed_by == "knowledge"
+    assert task.claim_confidence == 0.93
+    assert task.claim_reason.startswith("knowledge capability")
+    assert [event.event_type for event in claimed.events] == [
+        EventType.TASK_OPENED,
+        EventType.TASK_CLAIMED,
+    ]
+    assert claimed.events[-1].metadata == {
+        "confidence": 0.93,
+        "signals": ("capability", "availability"),
+    }
+
+    with pytest.raises(ValueError, match="not open"):
+        claimed.claim_task(
+            _task().id,
+            ClaimDecision(
+                expert_name="other",
+                accepted=True,
+                confidence=1.0,
+                reason="duplicate claim",
+            ),
+        )
+
+
+def test_exact_artifact_queries_do_not_depend_on_append_order() -> None:
+    first_task = _task()
+    second_task = AgentTask(
+        id="knowledge.retrieve.second",
+        title="RetrieveMoreRecipeKnowledge",
+        capability=ExpertCapability.RECIPE_KNOWLEDGE,
+        expected_artifacts=(ArtifactKind.RECIPE_EVIDENCE,),
+    )
+    board = _board().add_task(first_task).add_task(second_task)
+    first = AgentArtifact(
+        id="artifact-first",
+        owner="knowledge",
+        kind=ArtifactKind.RECIPE_EVIDENCE,
+        payload={"recipe": "first"},
+        confidence=0.8,
+        task_id=first_task.id,
+    )
+    second = AgentArtifact(
+        id="artifact-second",
+        owner="knowledge",
+        kind=ArtifactKind.RECIPE_EVIDENCE,
+        payload={"recipe": "second"},
+        confidence=0.9,
+        task_id=second_task.id,
+        revision_of=first.id,
+    )
+    board = board.add_artifact(second).add_artifact(first)
+
+    assert (
+        board.artifact_for(
+            task_id=first_task.id,
+            kind=ArtifactKind.RECIPE_EVIDENCE,
+        )
+        is first
+    )
+    assert board.artifact_by_id(second.id) is second
+    assert (
+        board.artifact_for(
+            task_id=first_task.id,
+            kind=ArtifactKind.REVIEW,
+        )
+        is None
+    )

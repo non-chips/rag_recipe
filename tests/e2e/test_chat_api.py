@@ -80,8 +80,19 @@ def test_chat_sse_persists_session_messages_and_trace() -> None:
         events = _parse_sse(first.text)
         types = [event["type"] for event in events]
         assert types[:2] == ["meta", "status"]
-        assert "token" in types
+        assert "token" not in types
         assert types[-1] == "done"
+        assert [
+            event["stage"] for event in events if event["type"] == "status"
+        ] == [
+            "routing",
+            "context",
+            "retrieval",
+            "validation",
+            "generating",
+            "reviewing",
+            "completed",
+        ]
         assert all(event["version"] == "1.0" for event in events)
         meta = next(event for event in events if event["type"] == "meta")
         done = events[-1]

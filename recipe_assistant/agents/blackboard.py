@@ -13,6 +13,7 @@ from recipe_assistant.agents.events import (
     AgentEvent,
     AgentTask,
     ArtifactKind,
+    ClaimDecision,
     EventType,
     TaskStatus,
 )
@@ -24,6 +25,12 @@ class _FrozenRouteDecision(RouteDecision):
 
 
 _TASK_TRANSITIONS: dict[TaskStatus, frozenset[TaskStatus]] = {
+    TaskStatus.OPEN: frozenset(
+        {TaskStatus.CLAIMED, TaskStatus.SKIPPED, TaskStatus.FAILED}
+    ),
+    TaskStatus.CLAIMED: frozenset(
+        {TaskStatus.RUNNING, TaskStatus.SKIPPED, TaskStatus.FAILED}
+    ),
     TaskStatus.PENDING: frozenset(
         {TaskStatus.RUNNING, TaskStatus.SKIPPED, TaskStatus.FAILED}
     ),
@@ -66,9 +73,14 @@ class CollaborationBlackboard:
         tasks = dict(self.tasks)
         tasks[task.id] = task
         updated = replace(self, tasks=tasks)
+        event_type = (
+            EventType.TASK_OPENED
+            if task.status is TaskStatus.OPEN
+            else EventType.TASK_ADDED
+        )
         return updated.append_event(
             AgentEvent(
-                event_type=EventType.TASK_ADDED,
+                event_type=event_type,
                 actor="coordinator",
                 task_id=task.id,
                 message=task.title,
@@ -88,6 +100,42 @@ class CollaborationBlackboard:
         tasks = dict(self.tasks)
         tasks[task_id] = replace(task, status=status)
         return replace(self, tasks=tasks)
+
+    def claim_task(
+        self,
+        task_id: str,
+        decision: ClaimDecision,
+    ) -> "CollaborationBlackboard":
+        """Atomically claim one open task and append its audit event."""
+
+        task = self.tasks.get(task_id)
+        if task is None:
+            raise KeyError(f"unknown task id: {task_id}")
+        if task.status is not TaskStatus.OPEN:
+            raise ValueError(f"task {task_id} is not open")
+        if not decision.accepted:
+            raise ValueError("a rejected claim decision cannot claim a task")
+        tasks = dict(self.tasks)
+        tasks[task_id] = replace(
+            task,
+            status=TaskStatus.CLAIMED,
+            claimed_by=decision.expert_name,
+            claim_confidence=decision.confidence,
+            claim_reason=decision.reason,
+        )
+        updated = replace(self, tasks=tasks)
+        return updated.append_event(
+            AgentEvent(
+                event_type=EventType.TASK_CLAIMED,
+                actor=decision.expert_name,
+                task_id=task_id,
+                message=decision.reason,
+                metadata={
+                    "confidence": decision.confidence,
+                    **dict(decision.metadata),
+                },
+            )
+        )
 
     def add_artifact(self, artifact: AgentArtifact) -> "CollaborationBlackboard":
         if any(item.id == artifact.id for item in self.artifacts):
@@ -130,6 +178,29 @@ class CollaborationBlackboard:
             for artifact in self.artifacts
             if (kind is None or artifact.kind is kind)
             and (task_id is None or artifact.task_id == task_id)
+        )
+
+    def artifact_for(
+        self,
+        *,
+        task_id: str,
+        kind: ArtifactKind,
+    ) -> AgentArtifact | None:
+        """Return the sole artifact for an exact task/kind dependency."""
+
+        matches = self.artifacts_for(kind=kind, task_id=task_id)
+        if len(matches) > 1:
+            raise ValueError(
+                f"multiple artifacts found for task {task_id} and kind {kind.value}"
+            )
+        return matches[0] if matches else None
+
+    def artifact_by_id(self, artifact_id: str) -> AgentArtifact | None:
+        """Return one artifact by its globally unique blackboard id."""
+
+        return next(
+            (artifact for artifact in self.artifacts if artifact.id == artifact_id),
+            None,
         )
 
     def dependencies_succeeded(self, task: AgentTask) -> bool:

@@ -433,30 +433,29 @@ class RecipeRecommendationExpert(BaseExpert):
     @staticmethod
     def _payload(
         board: CollaborationBlackboard,
+        task_id: str,
         kind: ArtifactKind,
         schema: type[ExpertPayload],
-        *,
-        stage: str = "",
     ) -> ExpertPayload:
-        artifacts = board.artifacts_for(kind=kind)
-        if stage:
-            artifacts = tuple(
-                artifact
-                for artifact in artifacts
-                if artifact.payload.get("stage") == stage
-            )
-        if not artifacts:
-            raise ValueError(f"required artifact is missing: {kind.value}")
-        return schema.model_validate(artifacts[-1].payload)
+        artifact = board.artifact_for(task_id=task_id, kind=kind)
+        if artifact is None:
+            raise ValueError(f"required artifact is missing: {task_id}/{kind.value}")
+        return schema.model_validate(artifact.payload)
 
     def _constraints(self, board: CollaborationBlackboard) -> TemporaryConstraints:
-        payload = self._payload(board, ArtifactKind.QUERY_CONSTRAINTS, TemporaryConstraints)
+        payload = self._payload(
+            board,
+            "recommendation.extract_constraints",
+            ArtifactKind.QUERY_CONSTRAINTS,
+            TemporaryConstraints,
+        )
         assert isinstance(payload, TemporaryConstraints)
         return payload
 
     def _preferences(self, board: CollaborationBlackboard) -> PreferenceContext:
         payload = self._payload(
             board,
+            "recommendation.preferences",
             ArtifactKind.USER_PREFERENCE_CONTEXT,
             PreferenceContext,
         )
@@ -464,8 +463,11 @@ class RecipeRecommendationExpert(BaseExpert):
         return payload
 
     def _weather(self, board: CollaborationBlackboard) -> WeatherContext | None:
-        artifacts = board.artifacts_for(kind=ArtifactKind.WEATHER_CONTEXT)
-        return WeatherContext.model_validate(artifacts[-1].payload) if artifacts else None
+        artifact = board.artifact_for(
+            task_id="recommendation.weather",
+            kind=ArtifactKind.WEATHER_CONTEXT,
+        )
+        return WeatherContext.model_validate(artifact.payload) if artifact else None
 
     def _candidate_set(
         self,
@@ -475,15 +477,25 @@ class RecipeRecommendationExpert(BaseExpert):
     ) -> CandidateSet:
         payload = self._payload(
             board,
+            (
+                "recommendation.retrieve"
+                if stage == "recalled"
+                else "recommendation.rank"
+            ),
             ArtifactKind.RECIPE_CANDIDATES,
             CandidateSet,
-            stage=stage,
         )
         assert isinstance(payload, CandidateSet)
         return payload
 
     def _validation(self, board: CollaborationBlackboard) -> ConstraintValidationResult:
-        artifacts = board.artifacts_for(kind=ArtifactKind.CONSTRAINT_VALIDATION)
-        if not artifacts:
-            raise ValueError("required artifact is missing: CONSTRAINT_VALIDATION")
-        return ConstraintValidationResult.model_validate(artifacts[-1].payload)
+        artifact = board.artifact_for(
+            task_id="recommendation.validate",
+            kind=ArtifactKind.CONSTRAINT_VALIDATION,
+        )
+        if artifact is None:
+            raise ValueError(
+                "required artifact is missing: "
+                "recommendation.validate/CONSTRAINT_VALIDATION"
+            )
+        return ConstraintValidationResult.model_validate(artifact.payload)

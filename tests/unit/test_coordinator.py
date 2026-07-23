@@ -14,6 +14,7 @@ from recipe_assistant.agents.events import (
     AgentArtifact,
     AgentTask,
     ArtifactKind,
+    ClaimDecision,
     EventType,
     ExpertCapability,
     TaskStatus,
@@ -29,6 +30,25 @@ class _FakeExpert:
     calls: list[str] = field(default_factory=list)
     fail_tasks: set[str] = field(default_factory=set)
     omit_tasks: set[str] = field(default_factory=set)
+    claim_confidence: float = 1.0
+    accepts_claims: bool = True
+
+    def decide(
+        self,
+        task: AgentTask,
+        blackboard: CollaborationBlackboard,
+    ) -> ClaimDecision:
+        del blackboard
+        return ClaimDecision(
+            expert_name=self.name,
+            accepted=self.accepts_claims and task.capability in self.capabilities,
+            confidence=self.claim_confidence,
+            reason=(
+                f"{self.name} accepts {task.id}"
+                if self.accepts_claims and task.capability in self.capabilities
+                else ""
+            ),
+        )
 
     def execute(self, task: AgentTask, blackboard: CollaborationBlackboard):
         del blackboard
@@ -204,3 +224,54 @@ def test_step_and_cost_budget_are_bounded() -> None:
         event.event_type is EventType.BUDGET_EXHAUSTED
         for event in outcome.blackboard.events
     )
+
+
+def test_registry_orders_accepted_claims_by_confidence_then_stable_name() -> None:
+    task = AgentTask(
+        id="knowledge.open",
+        title="OpenKnowledgeTask",
+        capability=ExpertCapability.RECIPE_KNOWLEDGE,
+        status=TaskStatus.OPEN,
+    )
+    board = _board(_decision(RouteType.RECIPE_KNOWLEDGE)).add_task(task)
+    low = _FakeExpert(
+        "low",
+        frozenset({ExpertCapability.RECIPE_KNOWLEDGE}),
+        claim_confidence=0.4,
+    )
+    zeta = _FakeExpert(
+        "zeta",
+        frozenset({ExpertCapability.RECIPE_KNOWLEDGE}),
+        claim_confidence=0.9,
+    )
+    alpha = _FakeExpert(
+        "alpha",
+        frozenset({ExpertCapability.RECIPE_KNOWLEDGE}),
+        claim_confidence=0.9,
+    )
+    rejected = _FakeExpert(
+        "rejected",
+        frozenset({ExpertCapability.RECIPE_KNOWLEDGE}),
+        claim_confidence=1.0,
+        accepts_claims=False,
+    )
+    unrelated = _FakeExpert(
+        "nutrition-only",
+        frozenset({ExpertCapability.NUTRITION_PLANNING}),
+        claim_confidence=1.0,
+    )
+    registry = ExpertRegistry([low, zeta, alpha, rejected, unrelated])
+
+    candidates = registry.candidates(task, board)
+
+    assert [candidate.expert.name for candidate in candidates] == [
+        "alpha",
+        "zeta",
+        "low",
+    ]
+    assert [candidate.decision.confidence for candidate in candidates] == [
+        0.9,
+        0.9,
+        0.4,
+    ]
+    assert registry.claim_candidates(task, board) == candidates
