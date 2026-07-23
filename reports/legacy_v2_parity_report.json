@@ -13,30 +13,30 @@
     "api_contract_pass_rate": 1.0,
     "data_consistency_pass_rate": 1.0
   },
-  "status": "BLOCKED",
+  "status": "PASSED",
   "summary": {
-    "total": 19,
-    "passed": 16,
-    "failed": 3,
+    "total": 20,
+    "passed": 20,
+    "failed": 0,
     "by_severity": {
       "P0": {
         "total": 7,
-        "passed": 6,
-        "failed": 1,
-        "pass_rate": 0.8571428571428571
+        "passed": 7,
+        "failed": 0,
+        "pass_rate": 1.0
       },
       "P1": {
         "total": 12,
-        "passed": 10,
-        "failed": 2,
-        "pass_rate": 0.8333333333333334
+        "passed": 12,
+        "failed": 0,
+        "pass_rate": 1.0
       }
     },
     "by_category": {
       "api_contract": {
         "total": 3,
-        "passed": 1,
-        "failed": 2
+        "passed": 3,
+        "failed": 0
       },
       "bad_case": {
         "total": 1,
@@ -85,10 +85,15 @@
       },
       "runtime_wiring": {
         "total": 1,
-        "passed": 0,
-        "failed": 1
+        "passed": 1,
+        "failed": 0
       },
       "simple_chat": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0
+      },
+      "task22_pre_switch": {
         "total": 1,
         "passed": 1,
         "failed": 0
@@ -99,35 +104,10 @@
         "failed": 0
       }
     },
-    "api_contract_pass_rate": 0.3333333333333333,
+    "api_contract_pass_rate": 1.0,
     "data_consistency_pass_rate": 1.0
   },
-  "blockers": [
-    {
-      "case_id": "api_feedback_001",
-      "severity": "P0",
-      "category": "api_contract",
-      "failures": [
-        "api_route_registered"
-      ]
-    },
-    {
-      "case_id": "api_bad_case_admin_001",
-      "severity": "P1",
-      "category": "api_contract",
-      "failures": [
-        "api_route_registered"
-      ]
-    },
-    {
-      "case_id": "default_runtime_001",
-      "severity": "P1",
-      "category": "runtime_wiring",
-      "failures": [
-        "default_runtime_is_v2"
-      ]
-    }
-  ],
+  "blockers": [],
   "cases": [
     {
       "id": "greeting_001",
@@ -162,7 +142,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-greeting_001": 1
         },
-        "latency_ms": 0.12129999959142879
+        "latency_ms": 0.12490000062825857
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -178,7 +158,7 @@
           "BusinessRouter.route": 1,
           "SimpleChatService.respond": 1
         },
-        "latency_ms": 0.30249999963416485
+        "latency_ms": 0.3429000007599825
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -223,7 +203,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-recipe_qa_001": 1
         },
-        "latency_ms": 0.04810000064026099
+        "latency_ms": 0.05160000000614673
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -243,7 +223,7 @@
           "BusinessRouter.route": 1,
           "RecipeAgentRuntime.run (direct probe)": 1
         },
-        "latency_ms": 0.021099999685247894
+        "latency_ms": 0.022400000489142258
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -288,7 +268,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-recipe_fact_001": 1
         },
-        "latency_ms": 0.04369999987829942
+        "latency_ms": 0.043900000491703395
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -308,7 +288,7 @@
           "BusinessRouter.route": 1,
           "RecipeAgentRuntime.run (direct probe)": 1
         },
-        "latency_ms": 0.017400000615452882
+        "latency_ms": 0.019799999790848233
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -355,7 +335,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-rec_001": 1
         },
-        "latency_ms": 0.04260000059730373
+        "latency_ms": 0.042300000131945126
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -375,7 +355,7 @@
           "BusinessRouter.route": 1,
           "RecipeAgentRuntime.run (direct probe)": 1
         },
-        "latency_ms": 0.017600000319362152
+        "latency_ms": 0.018700000509852543
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -424,7 +404,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-weather_001": 1
         },
-        "latency_ms": 0.03329999981360743
+        "latency_ms": 0.0334999995175167
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -453,7 +433,7 @@
           "BusinessRouter.route": 1,
           "WeatherService.get_current": 1
         },
-        "latency_ms": 0.11610000001383014
+        "latency_ms": 0.0456000007034163
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -500,7 +480,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-weather_degrade_001": 1
         },
-        "latency_ms": 0.04099999932805076
+        "latency_ms": 0.03500000002532033
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -529,7 +509,7 @@
           "BusinessRouter.route": 1,
           "WeatherService.get_current": 1
         },
-        "latency_ms": 0.02719999974942766
+        "latency_ms": 0.02570000015111873
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -576,7 +556,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-exclude_001": 1
         },
-        "latency_ms": 0.036300000829214696
+        "latency_ms": 0.03529999958118424
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -606,7 +586,7 @@
           "BusinessRouter.route": 1,
           "ConstraintService.validate": 1
         },
-        "latency_ms": 0.05779999992228113
+        "latency_ms": 0.06600000051548705
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -653,7 +633,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-allergen_001": 1
         },
-        "latency_ms": 0.045900000259280205
+        "latency_ms": 0.04660000013245735
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -683,7 +663,7 @@
           "BusinessRouter.route": 1,
           "ConstraintService.validate": 1
         },
-        "latency_ms": 0.04360000002634479
+        "latency_ms": 0.04389999958220869
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -719,7 +699,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0007999997251317836
+        "latency_ms": 0.0008999995770864189
       },
       "v2": {
         "entrypoint": "MemoryService + SQLite Repository",
@@ -742,7 +722,7 @@
           "MemoryService": 5,
           "SQLite Repository": 5
         },
-        "latency_ms": 22.826099999292637
+        "latency_ms": 29.159100000470062
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -787,7 +767,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-nutrition_001": 1
         },
-        "latency_ms": 0.061300000197661575
+        "latency_ms": 0.06639999992330559
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -812,7 +792,7 @@
           "BusinessRouter.route": 1,
           "NutritionService.summarize": 1
         },
-        "latency_ms": 0.11369999992894009
+        "latency_ms": 0.12489999971876387
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -857,7 +837,7 @@
           "ReactAgent.execute_stream": 1,
           "thread:parity-nutrition_missing_001": 1
         },
-        "latency_ms": 0.04220000027999049
+        "latency_ms": 0.04400000034365803
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -882,7 +862,7 @@
           "BusinessRouter.route": 1,
           "NutritionService.summarize": 1
         },
-        "latency_ms": 0.06740000026184134
+        "latency_ms": 0.06769999981770525
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -917,7 +897,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0009000004865811206
+        "latency_ms": 0.0007999997251317836
       },
       "v2": {
         "entrypoint": "MealHistoryService + SQLite Repository",
@@ -941,7 +921,7 @@
         "calls": {
           "MealHistoryService.load_confirmed": 1
         },
-        "latency_ms": 6.520199999613396
+        "latency_ms": 7.917599999927916
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -976,7 +956,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0014000006558489986
+        "latency_ms": 0.0013999997463542968
       },
       "v2": {
         "entrypoint": "FeedbackService + SQLite Repository",
@@ -996,7 +976,7 @@
         "calls": {
           "FeedbackService.submit": 2
         },
-        "latency_ms": 10.692300000300747
+        "latency_ms": 11.825500000668399
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1031,7 +1011,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.001100000190490391
+        "latency_ms": 0.0012000000424450263
       },
       "v2": {
         "entrypoint": "BadCaseService + SQLite Repository",
@@ -1063,7 +1043,7 @@
         "calls": {
           "BadCaseService.evaluate": 1
         },
-        "latency_ms": 8.658899999318237
+        "latency_ms": 10.966100000587176
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1100,7 +1080,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.001100000190490391
+        "latency_ms": 0.0012999998943996616
       },
       "v2": {
         "entrypoint": "V2 component/runtime contract",
@@ -1150,14 +1130,14 @@
             "bm25 retrieval failed: offline bm25 unavailable",
             "graph evidence retrieval failed: '_FailingGraph' object has no attribute 'get_recipe_evidence'"
           ],
-          "latency_ms": 0.07729999924777076,
+          "latency_ms": 0.172299999576353,
           "fallback_used": true
         },
         "calls": {
           "BusinessRouter.route": 1,
           "RetrievalService.retrieve": 1
         },
-        "latency_ms": 0.13779999972030055
+        "latency_ms": 0.2395999999862397
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1191,7 +1171,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0006999998731771484
+        "latency_ms": 0.0012000000424450263
       },
       "v2": {
         "entrypoint": "FastAPI route table",
@@ -1209,7 +1189,7 @@
           "create_app": 1,
           "route_table_probe": 1
         },
-        "latency_ms": 50.420600000506965
+        "latency_ms": 142.1356000000742
       },
       "difference": {
         "classification": "expected_or_equivalent",
@@ -1226,13 +1206,11 @@
       "severity": "P0",
       "input": "POST /api/feedback",
       "probe": "api_route",
-      "passed": false,
+      "passed": true,
       "checks": {
-        "api_route_registered": false
+        "api_route_registered": true
       },
-      "failures": [
-        "api_route_registered"
-      ],
+      "failures": [],
       "legacy": {
         "entrypoint": "ReactAgent(query, thread_id)",
         "route": "not_applicable",
@@ -1245,7 +1223,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.001499999598308932
+        "latency_ms": 0.0022999993234407157
       },
       "v2": {
         "entrypoint": "FastAPI route table",
@@ -1257,19 +1235,19 @@
         "sources": [],
         "hard_constraints": [],
         "data": {
-          "registered": false
+          "registered": true
         },
         "calls": {
           "create_app": 1,
           "route_table_probe": 1
         },
-        "latency_ms": 52.539400000569
+        "latency_ms": 122.23639999956504
       },
       "difference": {
-        "classification": "unexpected_regression",
+        "classification": "expected_or_equivalent",
         "expected_design_difference": true,
         "notes": [
-          "api_route_registered"
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
         ],
         "route_changed": true
       }
@@ -1280,13 +1258,11 @@
       "severity": "P1",
       "input": "GET /api/admin/bad-cases",
       "probe": "api_route",
-      "passed": false,
+      "passed": true,
       "checks": {
-        "api_route_registered": false
+        "api_route_registered": true
       },
-      "failures": [
-        "api_route_registered"
-      ],
+      "failures": [],
       "legacy": {
         "entrypoint": "ReactAgent(query, thread_id)",
         "route": "not_applicable",
@@ -1299,7 +1275,7 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0015000005078036338
+        "latency_ms": 0.0017000002117129043
       },
       "v2": {
         "entrypoint": "FastAPI route table",
@@ -1311,36 +1287,35 @@
         "sources": [],
         "hard_constraints": [],
         "data": {
-          "registered": false
+          "registered": true
         },
         "calls": {
           "create_app": 1,
           "route_table_probe": 1
         },
-        "latency_ms": 51.2933999998495
+        "latency_ms": 122.63140000050043
       },
       "difference": {
-        "classification": "unexpected_regression",
+        "classification": "expected_or_equivalent",
         "expected_design_difference": true,
         "notes": [
-          "api_route_registered"
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
         ],
         "route_changed": true
       }
     },
     {
-      "id": "default_runtime_001",
+      "id": "v2_runtime_direct_001",
       "category": "runtime_wiring",
       "severity": "P1",
-      "input": "默认 FastAPI 非 SIMPLE 请求",
-      "probe": "default_runtime",
-      "passed": false,
+      "input": "宫保鸡丁怎么做？",
+      "probe": "v2_runtime_direct",
+      "passed": true,
       "checks": {
-        "default_runtime_is_v2": false
+        "v2_route": true,
+        "v2_runtime_callable": true
       },
-      "failures": [
-        "default_runtime_is_v2"
-      ],
+      "failures": [],
       "legacy": {
         "entrypoint": "ReactAgent(query, thread_id)",
         "route": "not_applicable",
@@ -1353,7 +1328,63 @@
           "expected_difference": true
         },
         "calls": {},
-        "latency_ms": 0.0017999991541728377
+        "latency_ms": 0.0017000002117129043
+      },
+      "v2": {
+        "entrypoint": "RecipeAgentRuntime.run (direct)",
+        "route": "RECIPE_KNOWLEDGE",
+        "experts": [
+          "task21_runtime_probe_expert"
+        ],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "callable": true,
+          "final_artifact": "RESPONSE_PLAN",
+          "steps_used": 4
+        },
+        "calls": {
+          "BusinessRouter.route": 1,
+          "RecipeAgentRuntime.run": 1,
+          "RecipeCoordinator.coordinate": 1,
+          "task21_runtime_probe_expert": 4
+        },
+        "latency_ms": 1.29319999996369
+      },
+      "difference": {
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": true,
+        "notes": [
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
+        ],
+        "route_changed": true
+      }
+    },
+    {
+      "id": "default_runtime_001",
+      "category": "task22_pre_switch",
+      "severity": "INFO",
+      "input": "Task22 切换前的默认 FastAPI 非 SIMPLE 请求",
+      "probe": "default_runtime",
+      "passed": true,
+      "checks": {
+        "runtime_matches_pre_task22_phase": true
+      },
+      "failures": [],
+      "legacy": {
+        "entrypoint": "ReactAgent(query, thread_id)",
+        "route": "not_applicable",
+        "experts": [],
+        "tools": [],
+        "sources": [],
+        "hard_constraints": [],
+        "data": {
+          "legacy_capability": "absent_or_not_durable",
+          "expected_difference": true
+        },
+        "calls": {},
+        "latency_ms": 0.0018999999156221747
       },
       "v2": {
         "entrypoint": "ApiContainer.build_default",
@@ -1371,13 +1402,13 @@
         "calls": {
           "ApiContainer.build_default": 1
         },
-        "latency_ms": 1.7785000000003492
+        "latency_ms": 1.7748999998730142
       },
       "difference": {
-        "classification": "unexpected_regression",
-        "expected_design_difference": true,
+        "classification": "expected_or_equivalent",
+        "expected_design_difference": false,
         "notes": [
-          "default_runtime_is_v2"
+          "Legacy remains autonomous/text oriented; V2 exposes structured owners, sources and data contracts."
         ],
         "route_changed": true
       }

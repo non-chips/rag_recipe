@@ -18,24 +18,22 @@
 | 11 | DONE | `287e837` | 指定测试：9 passed；相邻层回归：27 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 12；推荐专家与硬约束服务已提交 |
 | 12 | DONE | `6f8dc79` | 指定测试：8 passed；相邻层回归：29 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 13；营养服务、专家与 JSON 报告已提交 |
 | 13 | DONE | `af4a760` | 指定测试：12 passed；PowerShell 环境检查：通过；相邻层回归：28 passed；Task 01 基线：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 14；FastAPI + SSE 与可替换 Streamlit 前端已提交 |
-| 14 | BLOCKED | 未提交 | 指定测试：5 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 反馈实现已完成白名单内部分；默认 API 仍需在静态主路由中注册，但 `recipe_assistant/api/router.py` 不在 Task 14 允许修改范围内 |
+| 14 | DONE | `task21 remediation commit` | 原指定测试：5 passed；Task 21 路由/契约修复验证通过 | 反馈路由已注册默认 API，原白名单阻塞在 Task 21 修复中解除 |
 | 15 | DONE | `02cf539` | 指定测试：8 passed；Alembic upgrade/check：通过；相邻反馈/约束/Trace 回归：10 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 16；规则型弱信号、候选评分与去重已提交 |
 | 16 | DONE | `d99ad5c` | 指定测试：10 passed；完整回归：125 passed；Alembic upgrade/check：通过；限定 Ruff：通过 | 用户已明确要求进入 Task 17；根因建议、审批审计、状态机和回归草稿已提交；默认管理路由注册风险保留 |
 | 17 | DONE | `591cf44` | 指定测试：10 passed；完整回归：135 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 18；Skill Registry、基础行为 Skill 和编写规范已提交 |
 | 18 | DONE | `fde9f1d` | 指定测试：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 19；四项高层 MCP Tool、服务语义一致性、可信用户注入和关闭时零资源初始化已提交 |
 | 19 | DONE | 未提交 | 离线评测：41/41；完整回归：141 passed；Ruff：通过；Windows API/Streamlit 冒烟：通过 | 旧入口仍有调用，未删除；默认反馈/管理路由未注册的发布风险保留并写入最终迁移报告 |
 | 20 | DONE | `pre-legacy-decommission` / `archive/legacy-react-agent` → `3af7683` | 数据备份 44 文件、SHA-256 0 失败；完整回归：141 passed；Ruff：通过；Windows 环境检查：通过 | 仅完成冻结、盘点和备份；默认入口未切换、旧代码未删除；Neo4j dump 未提供；Task 14 状态仍为 BLOCKED |
-| 21 | BLOCKED | `task21 evidence commit` | 对照评测：16/19；P0：6/7；P1：10/12；指定集成测试：3 passed；完整回归：144 passed；Ruff/compileall：通过 | `/api/feedback` 与 Bad Case 管理路由未注册；默认非 SIMPLE executor 仍为 `LazyLegacyExecutor`；按停止条件禁止进入 Task 22 |
+| 21 | DONE | `task21 evidence + remediation commits` | 对照评测：20/20；P0：7/7；P1：12/12；API/数据一致性：100%；针对性测试：9 passed | 反馈与 Bad Case 路由已注册；V2 Runtime 可直接执行；默认 Runtime 保持旧实现并留给 Task 22 切换 |
 
 状态只允许：`TODO`、`IN_PROGRESS`、`BLOCKED`、`DONE`。
 
 ## 当前阻塞
 
-- Task 14 的反馈路由已定义，但现有 Task 13 主路由采用静态注册；需获准修改白名单外的 `recipe_assistant/api/router.py` 后才能让默认 API 与前端访问该端点。
-- Task 16 的管理路由同样已定义并通过独立集成测试，但需获准修改 `recipe_assistant/api/router.py` 后才能接入默认 API Runtime。
+- 无阻止进入 Task 22 的 P0/P1 门禁失败。
 - Task 20 已备份 Neo4j 可重建材料，但没有外部 Neo4j 数据库 dump；启用 Neo4j 的环境在任何清库或重建前必须补充一致性 dump。
-- Task 20 静态盘点确认默认 FastAPI 的非 SIMPLE 请求仍通过 `LazyLegacyExecutor` 调用旧 `ReactAgent`；必须先完成 Task 21 对照评测与后续 V2 切换，禁止提前删除旧链路。
-- Task 21 已形成同输入离线对照证据，但 `api_feedback_001`（P0）、`api_bad_case_admin_001`（P1）和 `default_runtime_001`（P1）失败；必须修复并重新达到 P0/P1 100% 后才能进入 Task 22。
+- 默认 FastAPI 的非 SIMPLE 请求仍通过 `LazyLegacyExecutor` 调用旧 `ReactAgent`；这是 Task 22 的预定切换范围，Task 21 未提前修改默认运行模式。
 
 ## 关键架构决策
 

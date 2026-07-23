@@ -28,7 +28,7 @@
 | 用户偏好 | 旧 Prompt/会话上下文 | `UserProfile` + `ProfileService` | `profile_001` | 待验证 | 是：结构化持久化 | 需验证偏好真正进入专家上下文 |
 | 饮食记录 | 无稳定结构化事实来源 | `recipe_interactions` + `MealHistoryService` | `meal_query_001`、`meal_consume_001` | 待验证 | 是：区分 QUERY/COOK/CONSUME | 数据语义是 P0 一致性门槛 |
 | 显式反馈 | 无正式能力 | `FeedbackService` + SQLite Repository | `feedback_001` | 待验证 | 是：V2 新增能力 | 路由已实现但默认 API 尚未注册 |
-| 隐式 Bad Case | 旧日志人工排查 | `BadCaseService` + 隐式信号/审批状态机 | `bad_case_001` | 待验证 | 是：V2 新增可审计闭环 | 管理路由尚未注册默认 API |
+| 隐式 Bad Case | 旧日志人工排查 | `BadCaseService` + 隐式信号/审批状态机 | `bad_case_001` | 是（V2 新能力） | 是：V2 新增可审计闭环 | Service 与默认管理 API 契约均通过 |
 | Tool 权限与审计 | `monitor_tool` 日志中间件 | `ToolGovernance` + `ToolTraceMiddleware` + Trace Repository | `tool_governance_001` | 待验证 | 是：V2 权限更严格 | 需核对失败事件与用户可见错误 |
 | HTTP/SSE | 根 Streamlit 直调 Python Agent | FastAPI `/api/chat/stream` + SSE + API-only Streamlit | `api_sse_001`、`sse_disconnect_001` | 待验证 | 是：明确进程边界 | 前端已仅调用 API；后端非 SIMPLE 仍延迟加载旧 Agent |
 
@@ -36,34 +36,35 @@
 
 - 功能归属已经明确，但尚不能据此删除任何旧实现。
 - `RecipeCoordinator` 未接入默认 Chat Runtime 是当前最大的等价性缺口。
-- 反馈与 Bad Case 管理路由未注册默认 API，属于发布契约缺口。
+- 反馈与 Bad Case 管理路由已在 Task 21 修复中注册默认 API。
 - Task 21 必须输出功能、数据一致性、检索质量和性能证据；本表不替代对照报告。
 
 ## Task 21 对照结果
 
-对照数据集包含 19 项离线、确定性组件/契约探针。旧侧执行真实 `LegacyReactAgentAdapter` 和 `RecipeQueryRouter` 规则模式，以离线流式 Agent 替代外部 LLM/Tool；V2 侧执行真实 `BusinessRouter`、领域 Service、SQLite Repository 和 FastAPI OpenAPI 契约，以确定性检索/天气 Provider 替代外部服务。该结果可审计且可重复，但不是 DeepSeek、高德、Chroma 或 Neo4j 的线上质量/性能基准。
+对照数据集包含 20 项离线、确定性组件/契约探针。旧侧执行真实 `LegacyReactAgentAdapter` 和 `RecipeQueryRouter` 规则模式，以离线流式 Agent 替代外部 LLM/Tool；V2 侧执行真实 `BusinessRouter`、`RecipeAgentRuntime`、领域 Service、SQLite Repository 和 FastAPI OpenAPI 契约，以确定性检索/天气 Provider 替代外部服务。该结果可审计且可重复，但不是 DeepSeek、高德、Chroma 或 Neo4j 的线上质量/性能基准。
 
 | 能力组 | 结果 | 等价性结论 | 证据/差异 |
 | --- | --- | --- | --- |
 | 简单聊天 | 通过 | 组件级等价 | SIMPLE Route 和非空回答通过；V2 有意绕过 LLM/Tool |
-| 菜谱知识 | 通过 | 组件级等价 | 知识 Route、明确专家和检索来源通过；默认 Runtime 尚未走专家 |
+| 菜谱知识 | 通过 | 组件级等价 | 知识 Route、明确专家和检索来源通过；V2 Runtime 可直接执行 |
 | 推荐与天气 | 通过 | 组件级等价 | 推荐 Route、天气成功/失败降级通过 |
 | 排除食材与过敏原 | 2/2 通过 | P0 等价 | 不安全候选均被 `ConstraintService` 拒绝 |
 | 多轮会话 | 通过 | V2 有意增强 | SQLite 恢复和消息顺序通过；旧侧仅为进程内 thread 语义 |
 | 营养与数据不足 | 2/2 通过 | V2 新能力通过 | 覆盖率 1.0 精确模式与 0.5 降级模式符合预期 |
 | QUERY/CONSUME | 通过 | P0 数据一致 | QUERY 未进入确认饮食历史 |
-| 显式反馈 Service | 通过 | V2 新能力通过 | 重复 LIKE 幂等且只产生一行；默认 API 路由未注册 |
-| Bad Case Service | 通过 | V2 新能力通过 | 工具失败 + 空检索生成待审核候选；默认管理路由未注册 |
+| 显式反馈 Service | 通过 | V2 新能力通过 | 重复 LIKE 幂等且只产生一行；默认 API 路由已注册 |
+| Bad Case Service | 通过 | V2 新能力通过 | 工具失败 + 空检索生成待审核候选；默认管理路由已注册 |
 | 检索降级 | 通过 | 组件级等价 | Graph/BM25 失败时 Chroma 命中且 `fallback_used=true` |
-| API 契约 | 1/3 通过 | **不等价，阻断** | Chat SSE 已注册；反馈和 Bad Case 管理路由缺失 |
-| 默认 Runtime | 失败 | **不等价，阻断** | 默认非 SIMPLE executor 仍为 `LazyLegacyExecutor` |
+| API 契约 | 3/3 通过 | Task 21 契约等价 | Chat SSE、反馈和 Bad Case 管理路由均已注册 |
+| V2 Runtime 直接调用 | 通过 | P1 通过 | `RecipeAgentRuntime` + Coordinator 可独立执行并产出 `RESPONSE_PLAN` |
+| 默认 Runtime 预切换状态 | 符合阶段预期 | 不计入 Task 21 P1 | 仍为 `LazyLegacyExecutor`，由 Task 22 负责切换 |
 
-汇总：16/19 通过；P0 为 6/7，P1 为 10/12，API 契约通过率 1/3，数据一致性通过率 100%。完整逐项证据见 `reports/legacy_v2_parity_report.json`，延迟 P50/P95 和调用次数见 `reports/legacy_v2_performance_report.json`。
+汇总：20/20 通过；P0 为 7/7，P1 为 12/12，API 契约和数据一致性通过率均为 100%。完整逐项证据见 `reports/legacy_v2_parity_report.json`，延迟 P50/P95 和调用次数见 `reports/legacy_v2_performance_report.json`。
 
-### 阻止 Task 22 的问题
+### Task 22 预切换事项
 
-1. `api_feedback_001`（P0）：`/api/feedback` 未注册默认 FastAPI 主路由。
-2. `api_bad_case_admin_001`（P1）：Bad Case 管理路由未注册默认 FastAPI 主路由。
-3. `default_runtime_001`（P1）：默认非 SIMPLE 请求仍注入 `LazyLegacyExecutor`，Coordinator/三专家未接入 Chat Runtime。
+1. 默认非 SIMPLE 请求仍注入 `LazyLegacyExecutor`；这是 Task 22 要执行的切换动作，不是 Task 21 等价性失败。
+2. Task 22 需要完成 Coordinator Runtime 的生产依赖装配、Harness 输出适配和显式回滚开关。
+3. 切换后必须重新运行本数据集、完整回归和 Windows Smoke Test。
 
-根据 Task 21 停止条件，以上问题解决并重新达到 P0/P1 100% 前，禁止进入默认 V2 切换。
+Task 21 的 P0/P1 与 API/数据门禁均已达到 100%，具备进入 Task 22 的技术前置条件。

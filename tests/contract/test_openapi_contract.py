@@ -16,6 +16,16 @@ def test_openapi_exposes_required_basic_resources() -> None:
         "/api/reports/nutrition",
         "/api/reports/nutrition/{report_id}",
         "/api/agent/runs/{run_id}",
+        "/api/feedback",
+        "/api/feedback/{message_id}",
+        "/api/admin/bad-cases",
+        "/api/admin/bad-cases/{bad_case_id}",
+        "/api/admin/bad-cases/{bad_case_id}/approve",
+        "/api/admin/bad-cases/{bad_case_id}/reject",
+        "/api/admin/bad-cases/{bad_case_id}/merge",
+        "/api/admin/bad-cases/{bad_case_id}/regression-draft/confirm",
+        "/api/admin/bad-cases/{bad_case_id}/resolve",
+        "/api/admin/bad-cases/{bad_case_id}/verify",
     }
 
     assert required.issubset(paths)

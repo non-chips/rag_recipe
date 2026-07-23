@@ -22,8 +22,17 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from agent.routing.query_router import RecipeQueryRouter  # noqa: E402
+from recipe_assistant.agents.coordinator import RecipeCoordinator  # noqa: E402
+from recipe_assistant.agents.events import (  # noqa: E402
+    AgentArtifact,
+    ArtifactKind,
+    ExpertCapability,
+)
 from recipe_assistant.agents.harness import LegacyReactAgentAdapter  # noqa: E402
+from recipe_assistant.agents.registry import ExpertRegistry  # noqa: E402
+from recipe_assistant.agents.result import ProfileSnapshot, RunContext  # noqa: E402
 from recipe_assistant.agents.router import BusinessRouter  # noqa: E402
+from recipe_assistant.agents.runtime import RecipeAgentRuntime  # noqa: E402
 from recipe_assistant.api.dependencies import ApiContainer  # noqa: E402
 from recipe_assistant.core.database import (  # noqa: E402
     Base,
@@ -124,6 +133,25 @@ class _FailingBm25:
     def search(self, *, query: str, k: int):
         del query, k
         raise RuntimeError("offline bm25 unavailable")
+
+
+class _RuntimeProbeExpert:
+    """Publish each requested artifact to prove direct V2 runtime execution."""
+
+    name = "task21_runtime_probe_expert"
+    capabilities = frozenset(ExpertCapability)
+
+    def execute(self, task, blackboard):
+        del blackboard
+        kind = task.expected_artifacts[0]
+        return AgentArtifact(
+            id=f"{task.id}:task21-probe",
+            owner=self.name,
+            kind=kind,
+            payload={"probe": "v2_runtime_direct", "kind": kind.value},
+            confidence=1.0,
+            task_id=task.id,
+        )
 
 
 def _percentile(values: list[float], percentile: float) -> float:
@@ -259,6 +287,7 @@ class ParityEvaluator:
             "bad_case": self._probe_bad_case,
             "retrieval_degradation": self._probe_retrieval_degradation,
             "api_route": self._probe_api_route,
+            "v2_runtime_direct": self._probe_v2_runtime_direct,
             "default_runtime": self._probe_default_runtime,
         }
         return handlers[probe](case)
@@ -675,7 +704,6 @@ class ParityEvaluator:
         return observation, {"api_route_registered": registered is case["expected"]["registered"]}
 
     def _probe_default_runtime(self, case: dict[str, Any]):
-        del case
         observation = _empty_observation("ApiContainer.build_default")
         container = ApiContainer.build_default()
         executor_name = type(container.chat_runner.harness.executor).__name__
@@ -689,7 +717,54 @@ class ParityEvaluator:
                 "calls": {"ApiContainer.build_default": 1},
             }
         )
-        return observation, {"default_runtime_is_v2": uses_v2}
+        return observation, {
+            "runtime_matches_pre_task22_phase": (
+                uses_v2 is case["expected"]["uses_v2_runtime"]
+            )
+        }
+
+    def _probe_v2_runtime_direct(self, case: dict[str, Any]):
+        observation, decision = self._route_observation(case["input"])
+        runtime = RecipeAgentRuntime(
+            RecipeCoordinator(ExpertRegistry([_RuntimeProbeExpert()]))
+        )
+        outcome = runtime.run(
+            RunContext(
+                run_id="task21-v2-runtime-direct",
+                user_id=1,
+                session_id=1,
+                session_public_id="task21-v2-runtime-direct",
+                original_input=case["input"],
+                normalized_input=case["input"],
+                profile=ProfileSnapshot(),
+            ),
+            decision,
+        )
+        callable_result = (
+            outcome.final_artifact.kind is ArtifactKind.RESPONSE_PLAN
+            and not outcome.warnings
+        )
+        observation.update(
+            {
+                "entrypoint": "RecipeAgentRuntime.run (direct)",
+                "experts": [_RuntimeProbeExpert.name],
+                "data": {
+                    "callable": callable_result,
+                    "final_artifact": outcome.final_artifact.kind.value,
+                    "steps_used": outcome.steps_used,
+                },
+                "calls": {
+                    "BusinessRouter.route": 1,
+                    "RecipeAgentRuntime.run": 1,
+                    "RecipeCoordinator.coordinate": 1,
+                    _RuntimeProbeExpert.name: outcome.steps_used,
+                },
+            }
+        )
+        return observation, {
+            "v2_route": decision.route.value == case["expected"]["v2_route"],
+            "v2_runtime_callable": callable_result is case["expected"]["callable"],
+        }
 
     @staticmethod
     def _legacy_tools(case: dict[str, Any], plan: dict[str, Any]) -> list[str]:

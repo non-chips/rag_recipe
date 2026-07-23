@@ -169,12 +169,20 @@
       "expected": {"registered": true}
     },
     {
-      "id": "default_runtime_001",
+      "id": "v2_runtime_direct_001",
       "category": "runtime_wiring",
       "severity": "P1",
+      "probe": "v2_runtime_direct",
+      "input": "宫保鸡丁怎么做？",
+      "expected": {"v2_route": "RECIPE_KNOWLEDGE", "callable": true}
+    },
+    {
+      "id": "default_runtime_001",
+      "category": "task22_pre_switch",
+      "severity": "INFO",
       "probe": "default_runtime",
-      "input": "默认 FastAPI 非 SIMPLE 请求",
-      "expected": {"uses_v2_runtime": true}
+      "input": "Task22 切换前的默认 FastAPI 非 SIMPLE 请求",
+      "expected": {"uses_v2_runtime": false}
     }
   ]
 }

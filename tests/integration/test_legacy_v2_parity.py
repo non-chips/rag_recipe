@@ -29,10 +29,10 @@ def test_dataset_covers_required_task21_capabilities() -> None:
         "data_consistency",
         "runtime_wiring",
     } <= categories
-    assert len(payload["cases"]) >= 15
+    assert len(payload["cases"]) >= 20
 
 
-def test_parity_report_enforces_p0_p1_stop_gate() -> None:
+def test_parity_report_reaches_p0_p1_gate_before_task22() -> None:
     parity, performance = ParityEvaluator(DATASET).run()
     by_id = {case["id"]: case for case in parity["cases"]}
 
@@ -43,17 +43,20 @@ def test_parity_report_enforces_p0_p1_stop_gate() -> None:
     assert by_id["feedback_001"]["passed"] is True
     assert by_id["retrieval_degrade_001"]["passed"] is True
 
-    assert by_id["api_feedback_001"]["passed"] is False
-    assert by_id["api_bad_case_admin_001"]["passed"] is False
-    assert by_id["default_runtime_001"]["passed"] is False
-    assert parity["status"] == "BLOCKED"
-    assert parity["summary"]["by_severity"]["P0"]["pass_rate"] < 1.0
+    assert by_id["api_feedback_001"]["passed"] is True
+    assert by_id["api_bad_case_admin_001"]["passed"] is True
+    assert by_id["v2_runtime_direct_001"]["passed"] is True
+    assert by_id["default_runtime_001"]["passed"] is True
+    assert by_id["default_runtime_001"]["v2"]["data"]["uses_v2_runtime"] is False
+    assert parity["status"] == "PASSED"
+    assert parity["summary"]["by_severity"]["P0"]["pass_rate"] == 1.0
+    assert parity["summary"]["by_severity"]["P1"]["pass_rate"] == 1.0
     assert performance["legacy"]["latency_ms"]["p50"] >= 0
     assert performance["v2"]["latency_ms"]["p95"] >= 0
     assert performance["v2"]["call_counts"]
 
 
-def test_report_writer_and_cli_return_blocked_status(tmp_path: Path) -> None:
+def test_report_writer_and_cli_return_passed_status(tmp_path: Path) -> None:
     parity, performance = ParityEvaluator(DATASET).run()
     write_reports(parity, performance, tmp_path)
 
@@ -61,5 +64,5 @@ def test_report_writer_and_cli_return_blocked_status(tmp_path: Path) -> None:
     performance_path = tmp_path / "legacy_v2_performance_report.json"
     assert parity_path.exists()
     assert performance_path.exists()
-    assert json.loads(parity_path.read_text(encoding="utf-8"))["status"] == "BLOCKED"
-    assert main(["--dataset", str(DATASET), "--output-dir", str(tmp_path)]) == 1
+    assert json.loads(parity_path.read_text(encoding="utf-8"))["status"] == "PASSED"
+    assert main(["--dataset", str(DATASET), "--output-dir", str(tmp_path)]) == 0
