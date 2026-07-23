@@ -24,6 +24,7 @@
 | 17 | DONE | `591cf44` | 指定测试：10 passed；完整回归：135 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 18；Skill Registry、基础行为 Skill 和编写规范已提交 |
 | 18 | DONE | `fde9f1d` | 指定测试：6 passed；限定 Ruff：通过 | 用户已明确要求进入 Task 19；四项高层 MCP Tool、服务语义一致性、可信用户注入和关闭时零资源初始化已提交 |
 | 19 | DONE | 未提交 | 离线评测：41/41；完整回归：141 passed；Ruff：通过；Windows API/Streamlit 冒烟：通过 | 旧入口仍有调用，未删除；默认反馈/管理路由未注册的发布风险保留并写入最终迁移报告 |
+| 20 | DONE | `pre-legacy-decommission` / `archive/legacy-react-agent` → `3af7683` | 数据备份 44 文件、SHA-256 0 失败；完整回归：141 passed；Ruff：通过；Windows 环境检查：通过 | 仅完成冻结、盘点和备份；默认入口未切换、旧代码未删除；Neo4j dump 未提供；Task 14 状态仍为 BLOCKED |
 
 状态只允许：`TODO`、`IN_PROGRESS`、`BLOCKED`、`DONE`。
 
@@ -31,6 +32,8 @@
 
 - Task 14 的反馈路由已定义，但现有 Task 13 主路由采用静态注册；需获准修改白名单外的 `recipe_assistant/api/router.py` 后才能让默认 API 与前端访问该端点。
 - Task 16 的管理路由同样已定义并通过独立集成测试，但需获准修改 `recipe_assistant/api/router.py` 后才能接入默认 API Runtime。
+- Task 20 已备份 Neo4j 可重建材料，但没有外部 Neo4j 数据库 dump；启用 Neo4j 的环境在任何清库或重建前必须补充一致性 dump。
+- Task 20 静态盘点确认默认 FastAPI 的非 SIMPLE 请求仍通过 `LazyLegacyExecutor` 调用旧 `ReactAgent`；必须先完成 Task 21 对照评测与后续 V2 切换，禁止提前删除旧链路。
 
 ## 关键架构决策
 

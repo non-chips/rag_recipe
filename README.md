@@ -23,6 +23,23 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\start_streamlit.ps1
 自动冒烟使用 `scripts/smoke_windows.ps1`；完整离线业务评测使用
 `python scripts/run_evaluation.py`。默认 API 尚未注册反馈和 Bad Case 管理路由，详见迁移报告。
 
+## 旧 ReactAgent 下线迁移
+
+旧链路正按“冻结与备份 → 新旧对照 → V2 默认切换 → 零调用隔离 → 分批删除”的顺序下线。当前 Task 20 只建立证据和备份，**没有切换默认运行入口，也没有删除旧代码**。
+
+- 旧/V2 能力对照：`docs/migration/legacy_parity_matrix.md`
+- 旧代码及数据盘点：`docs/migration/legacy_inventory.md`
+- 本地备份操作：`docs/migration/data_backup_plan.md`
+- Git 与数据回滚：`docs/migration/rollback.md`
+
+创建下线前备份：
+
+```powershell
+powershell.exe -ExecutionPolicy Bypass -File scripts\backup_local_data.ps1
+```
+
+下线前基线由 `pre-legacy-decommission` 标签和 `archive/legacy-react-agent` 分支保护。不要在 Task 21 对照验证和 Task 23 零调用验证完成前删除 `app.py`、`agent/` 或旧兼容适配器。
+
 ---
 
 # 旧版说明（兼容资料）
