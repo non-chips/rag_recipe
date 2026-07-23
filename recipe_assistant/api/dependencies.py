@@ -11,9 +11,6 @@ from fastapi import Header, Request
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from recipe_assistant.agents.harness import (
-    LegacyReactAgentAdapter,
-)
 from recipe_assistant.agents.factory import build_runtime_harness
 from recipe_assistant.agents.result import ChatRequest, ChatServiceResult
 from recipe_assistant.api.application import ApiApplicationService
@@ -30,20 +27,6 @@ from recipe_assistant.services.nutrition import NutritionCatalog
 
 class ChatRunner(Protocol):
     def run(self, request: ChatRequest) -> ChatServiceResult: ...
-
-
-class LazyLegacyExecutor:
-    """Delay the legacy model/agent construction until a non-simple request arrives."""
-
-    def __init__(self) -> None:
-        self._adapter: LegacyReactAgentAdapter | None = None
-
-    def execute(self, query: str, thread_id: str) -> str:
-        if self._adapter is None:
-            from agent.react_agent import ReactAgent
-
-            self._adapter = LegacyReactAgentAdapter(ReactAgent())
-        return self._adapter.execute(query, thread_id)
 
 
 @dataclass(slots=True)
@@ -63,7 +46,6 @@ class ApiContainer:
         harness = build_runtime_harness(
             resolved_settings,
             session_factory,
-            LazyLegacyExecutor(),
         )
         catalog_path = Path(PROJECT_ROOT) / "data" / "nutrition" / "recipes.json"
         catalog = (

@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 import json
-import logging
 from collections.abc import Callable, Mapping
-from hashlib import sha256
 from pathlib import Path
-from threading import Lock, Thread
+from threading import Lock
 from time import perf_counter
 from typing import Any, Protocol
 from urllib.parse import urlencode
@@ -70,18 +68,8 @@ from recipe_assistant.tools.registry import ToolRegistry
 from recipe_assistant.tools.schemas import CalculateNutritionInput, MealHistoryInput
 
 
-logger = logging.getLogger(__name__)
-
-
-class LegacyExecutor(Protocol):
-    def execute(self, query: str, thread_id: str) -> str: ...
-
-
 class RuntimeProvider(Protocol):
     def __call__(self) -> RecipeAgentRuntime: ...
-
-
-ShadowSink = Callable[[dict[str, Any]], None]
 
 
 class LazyRuntimeProvider:
@@ -304,28 +292,21 @@ class ArtifactResponseRenderer:
 
 
 class MultiExpertHarness:
-    """Default V2 harness with explicit developer-only legacy and shadow modes."""
+    """V2-only production harness with no legacy runtime registration."""
 
     def __init__(
         self,
         *,
-        mode: str,
         runtime_provider: RuntimeProvider,
-        legacy_executor: LegacyExecutor,
-        legacy_fallback_enabled: bool = False,
         router: BusinessRouter | None = None,
         simple_chat: SimpleChatService | None = None,
         renderer: ArtifactResponseRenderer | None = None,
-        shadow_sink: ShadowSink | None = None,
     ) -> None:
-        self.mode = mode
+        self.mode = "v2"
         self.runtime_provider = runtime_provider
-        self.legacy_executor = legacy_executor
-        self.legacy_fallback_enabled = legacy_fallback_enabled
         self.router = router or BusinessRouter()
         self.simple_chat = simple_chat or SimpleChatService()
         self.renderer = renderer or ArtifactResponseRenderer()
-        self.shadow_sink = shadow_sink or self._log_shadow
 
     @staticmethod
     def normalize_input(text: str) -> str:
@@ -344,51 +325,29 @@ class MultiExpertHarness:
             }
         ]
         sources: list[dict[str, Any]] = []
-        used_legacy = False
         try:
-            if self.mode == "legacy":
-                final_text = self._legacy(context)
-                used_legacy = True
-                events.append({"type": "legacy_executor", "status": "succeeded"})
-            else:
-                final_text, sources, runtime_events = self._v2(context, decision)
-                events.extend(runtime_events)
-                if self.mode == "shadow":
-                    self._schedule_shadow(context, decision, final_text)
-                    events.append({"type": "shadow_scheduled", "primary": "v2"})
+            final_text, sources, runtime_events = self._v2(context, decision)
+            events.extend(runtime_events)
             status = RunStatus.SUCCEEDED
             error = None
         except Exception as exc:
-            if self.mode == "v2" and self.legacy_fallback_enabled:
-                final_text = self._legacy(context)
-                used_legacy = True
-                status = RunStatus.SUCCEEDED
-                error = None
-                events.append(
-                    {
-                        "type": "legacy_fallback",
-                        "error_type": type(exc).__name__,
-                        "error": str(exc),
-                    }
-                )
-            else:
-                final_text = "抱歉，本次请求暂时无法完成，请稍后重试。"
-                status = RunStatus.FAILED
-                error = str(exc)
-                events.append(
-                    {
-                        "type": "execution_error",
-                        "error_type": type(exc).__name__,
-                        "error": str(exc),
-                    }
-                )
+            final_text = "抱歉，本次请求暂时无法完成，请稍后重试。"
+            status = RunStatus.FAILED
+            error = str(exc)
+            events.append(
+                {
+                    "type": "execution_error",
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                }
+            )
 
         result = AgentRunResult(
             status=status,
             final_text=final_text,
             events=events,
             sources=sources,
-            used_legacy_executor=used_legacy,
+            used_legacy_executor=False,
             error=error,
         )
         return HarnessOutcome(
@@ -414,54 +373,6 @@ class MultiExpertHarness:
             {"type": "v2_runtime", "status": outcome.status.value},
             *outcome.blackboard.trace_events(),
         ]
-
-    def _legacy(self, context: RunContext) -> str:
-        return self.legacy_executor.execute(
-            context.normalized_input,
-            context.session_public_id,
-        )
-
-    def _schedule_shadow(
-        self,
-        context: RunContext,
-        decision: RouteDecision,
-        v2_text: str,
-    ) -> None:
-        def compare() -> None:
-            started_at = perf_counter()
-            try:
-                legacy_text = self._legacy(context)
-                record = {
-                    "run_id": context.run_id,
-                    "route": decision.route.value,
-                    "status": "succeeded",
-                    "v2_sha256": self._digest(v2_text),
-                    "legacy_sha256": self._digest(legacy_text),
-                    "same_text": v2_text == legacy_text,
-                    "v2_length": len(v2_text),
-                    "legacy_length": len(legacy_text),
-                    "latency_ms": (perf_counter() - started_at) * 1000,
-                }
-            except Exception as exc:
-                record = {
-                    "run_id": context.run_id,
-                    "route": decision.route.value,
-                    "status": "failed",
-                    "error_type": type(exc).__name__,
-                    "error": str(exc),
-                }
-            self.shadow_sink(record)
-
-        Thread(target=compare, name=f"shadow-{context.run_id[:8]}", daemon=True).start()
-
-    @staticmethod
-    def _digest(text: str) -> str:
-        return sha256(text.encode("utf-8")).hexdigest()
-
-    @staticmethod
-    def _log_shadow(record: dict[str, Any]) -> None:
-        logger.info("runtime_shadow_comparison %s", json.dumps(record, ensure_ascii=False))
-
 
 def build_multi_expert_runtime(
     settings: Settings,
@@ -553,20 +464,14 @@ def build_multi_expert_runtime(
 def build_runtime_harness(
     settings: Settings,
     session_factory: sessionmaker[Session],
-    legacy_executor: LegacyExecutor,
     *,
     runtime_provider: RuntimeProvider | None = None,
-    shadow_sink: ShadowSink | None = None,
 ) -> MultiExpertHarness:
     provider = runtime_provider or LazyRuntimeProvider(
         lambda: build_multi_expert_runtime(settings, session_factory)
     )
     return MultiExpertHarness(
-        mode=settings.agent_runtime_mode,
         runtime_provider=provider,
-        legacy_executor=legacy_executor,
-        legacy_fallback_enabled=settings.legacy_fallback_enabled,
-        shadow_sink=shadow_sink,
     )
 
 

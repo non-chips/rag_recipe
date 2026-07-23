@@ -25,7 +25,7 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\start_streamlit.ps1
 
 ## 旧 ReactAgent 下线迁移
 
-旧链路正按“冻结与备份 → 新旧对照 → V2 默认切换 → 零调用隔离 → 分批删除”的顺序下线。Task 22 已完成 V2 默认切换并保留显式回滚模式，**尚未删除或隔离旧代码**。
+旧链路正按“冻结与备份 → 新旧对照 → V2 默认切换 → 零调用隔离 → 分批删除”的顺序下线。Task 23 已完成正常 Runtime 零调用隔离，**旧文件仍保留且尚未执行物理删除**。
 
 - 旧/V2 能力对照：`docs/migration/legacy_parity_matrix.md`
 - 旧代码及数据盘点：`docs/migration/legacy_inventory.md`
@@ -40,7 +40,7 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\backup_local_data.ps1
 
 下线前基线由 `pre-legacy-decommission` 标签和 `archive/legacy-react-agent` 分支保护。不要在 Task 21 对照验证和 Task 23 零调用验证完成前删除 `app.py`、`agent/` 或旧兼容适配器。
 
-### Agent Runtime 模式
+### Agent Runtime 隔离
 
 默认 FastAPI Chat Runtime 已切换到 V2 多专家编排：
 
@@ -49,23 +49,21 @@ AGENT_RUNTIME_MODE=v2
 LEGACY_FALLBACK_ENABLED=false
 ```
 
-可选模式：
+正常 Runtime 现在只接受 `AGENT_RUNTIME_MODE=v2` 和
+`LEGACY_FALLBACK_ENABLED=false`。development、test 和 production 均不再提供
+legacy/shadow 在线入口；V2 执行失败时返回明确错误，不会静默进入旧链路。
 
-| 模式 | 用途 | 用户响应来源 |
-| --- | --- | --- |
-| `v2` | 默认开发/生产模式 | V2 `MultiExpertHarness` + Coordinator |
-| `legacy` | 仅 development/test 显式回归 | 旧 `ReactAgent` |
-| `shadow` | 仅 development/test 新旧对照 | 始终返回 V2；旧链路仅后台记录摘要 |
-
-生产环境会拒绝 `legacy`、`shadow` 和 `LEGACY_FALLBACK_ENABLED=true`。V2 执行失败时默认返回明确错误，不会静默进入旧链路。需要本地紧急回归时，可以在停止服务后显式设置：
+需要开发者执行历史新旧对比时，使用与 API Runtime 隔离的离线脚本：
 
 ```powershell
-$env:APP_ENV = "development"
-$env:AGENT_RUNTIME_MODE = "legacy"
-powershell.exe -ExecutionPolicy Bypass -File scripts\start_api.ps1
+D:\Anaconda\envs\rag\python.exe scripts\compare_legacy_vs_v2.py `
+  --dataset D:\ragdemo\tests\datasets\legacy_v2_parity_cases.json `
+  --output-dir D:\ragdemo\reports
 ```
 
-完成回归后删除该进程环境变量并恢复 `AGENT_RUNTIME_MODE=v2`。Streamlit 仍只调用 FastAPI `/api/chat/stream`，不直接导入任何 Agent。
+该脚本不会注册到 FastAPI 容器。Streamlit 仍只调用 FastAPI
+`/api/chat/stream`，不直接导入任何 Agent。完整静态调用清单见
+`docs/migration/legacy_callers_report.md`。
 
 ---
 

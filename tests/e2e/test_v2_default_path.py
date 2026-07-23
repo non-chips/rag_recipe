@@ -56,16 +56,6 @@ class _ReplayRuntime:
         )
 
 
-class _ForbiddenLegacy:
-    def __init__(self) -> None:
-        self.calls = 0
-
-    def execute(self, query: str, thread_id: str) -> str:
-        del query, thread_id
-        self.calls += 1
-        raise AssertionError("default V2 replay must not call legacy")
-
-
 def _settings() -> Settings:
     return Settings(
         _env_file=None,
@@ -111,7 +101,6 @@ def test_default_container_selects_v2_without_importing_legacy_agent() -> None:
         harness = container.chat_runner.harness
         assert isinstance(harness, MultiExpertHarness)
         assert harness.mode == "v2"
-        assert harness.legacy_fallback_enabled is False
         assert ("agent.react_agent" in sys.modules) is legacy_was_loaded
     finally:
         container.engine.dispose()
@@ -125,11 +114,9 @@ def test_default_v2_mode_passes_120_artificial_replays() -> None:
     )
     factory = create_session_factory(engine)
     runtime = _ReplayRuntime()
-    legacy = _ForbiddenLegacy()
     harness = build_runtime_harness(
         _settings(),
         factory,
-        legacy,
         runtime_provider=lambda: runtime,
     )
 
@@ -142,7 +129,6 @@ def test_default_v2_mode_passes_120_artificial_replays() -> None:
     assert report["failed"] == 0
     assert report["legacy_primary_responses"] == 0
     assert runtime.calls == 100
-    assert legacy.calls == 0
     assert report["routes"] == {
         "COMPLEX": 20,
         "NUTRITION_PLANNING": 20,
@@ -158,11 +144,9 @@ def test_real_v2_assembly_degrades_without_retrieval_and_never_calls_legacy() ->
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    legacy = _ForbiddenLegacy()
     harness = build_runtime_harness(
         _settings(),
         create_session_factory(engine),
-        legacy,
     )
 
     outcome = harness.run(_contexts()[1])
@@ -171,4 +155,3 @@ def test_real_v2_assembly_degrades_without_retrieval_and_never_calls_legacy() ->
     assert outcome.result.status.value == "SUCCEEDED"
     assert outcome.result.used_legacy_executor is False
     assert "没有找到足够信息" in outcome.result.final_text
-    assert legacy.calls == 0

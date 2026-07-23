@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Protocol
+
 from sqlalchemy.orm import Session, sessionmaker
 
-from recipe_assistant.agents.harness import RecipeAgentHarness
 from recipe_assistant.agents.result import (
     ChatRequest,
     ChatServiceResult,
+    HarnessOutcome,
     RunContext,
 )
 from recipe_assistant.core.database import session_scope
@@ -22,13 +24,20 @@ from recipe_assistant.services.profile import ProfileService
 from recipe_assistant.services.trace import TraceService
 
 
+class ChatHarness(Protocol):
+    @staticmethod
+    def normalize_input(text: str) -> str: ...
+
+    def run(self, context: RunContext) -> HarnessOutcome: ...
+
+
 class ChatService:
     """Load context, execute once, and persist final user-visible output."""
 
     def __init__(
         self,
         session_factory: sessionmaker[Session],
-        harness: RecipeAgentHarness,
+        harness: ChatHarness,
     ) -> None:
         self.session_factory = session_factory
         self.harness = harness
