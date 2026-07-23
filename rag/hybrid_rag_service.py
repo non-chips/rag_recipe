@@ -2,8 +2,6 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from langchain_core.documents import Document
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import PromptTemplate
 
 from graph.graph_retriever import GraphRecipeRetriever
 from rag.retrieval.bm25_retriever import BM25RecipeRetriever
@@ -12,28 +10,6 @@ from rag.vector_store import VectorStoreService
 from recipe_assistant.schemas.retrieval import RetrievalRequest, RetrievalStrategy
 from recipe_assistant.services.retrieval import RetrievalService
 from utils.config_handler import chroma_conf
-
-
-HYBRID_PROMPT = """
-你是一个菜谱知识库助手。
-请严格依据下面的“图谱结构化依据”和“菜谱文本上下文”回答用户问题。
-
-回答要求：
-1. 优先给出满足条件的菜名。
-2. 说明为什么这些菜满足用户条件，图谱依据优先用于食材、工具、分类、难度等结构化判断。
-3. 做法、步骤、用量等细节必须来自菜谱文本上下文，不要编造。
-4. 如果图谱依据或文本上下文不足，请明确说明当前知识库中没有找到足够信息。
-5. 仅使用中文回答，结尾简要标注来源菜谱。
-
-用户问题：
-{input}
-
-图谱结构化依据：
-{graph_context}
-
-菜谱文本上下文：
-{text_context}
-"""
 
 
 @dataclass
@@ -67,8 +43,6 @@ class HybridRagService:
             vector_retriever=self.retriever,
             bm25_retriever=self.bm25_retriever,
         )
-        self.prompt_template = PromptTemplate.from_template(HYBRID_PROMPT)
-        self.chain = None
 
     def retrieve(
         self,
@@ -153,43 +127,8 @@ class HybridRagService:
             fused_results=fused_results,
         )
 
-    def hybrid_summarize(
-        self,
-        query: str,
-        ingredients: list[str] | None = None,
-        tools: list[str] | None = None,
-        category: str | None = None,
-        recipe_names: list[str] | None = None,
-    ) -> str:
-        result = self.retrieve(
-            query=query,
-            ingredients=ingredients,
-            tools=tools,
-            category=category,
-            recipe_names=recipe_names,
-        )
-
-        if not result.candidates and not result.text_docs:
-            return "当前菜谱知识库中没有找到足够信息。"
-
-        return self._get_chain().invoke(
-            {
-                "input": query,
-                "graph_context": self._format_graph_context(result.graph_evidence),
-                "text_context": self._format_text_context(result.text_docs),
-            }
-        )
-
     def close(self) -> None:
         self.retrieval_service.close()
-
-    def _get_chain(self):
-        if self.chain is None:
-            from model.factory import chat_model
-
-            self.chain = self.prompt_template | chat_model | StrOutputParser()
-
-        return self.chain
 
     def _format_graph_context(self, rows: list[dict]) -> str:
         if not rows:
@@ -247,24 +186,3 @@ class HybridRagService:
                 parts.append(str(name))
 
         return "、".join(parts)
-
-    def _format_text_context(self, docs: list[Document]) -> str:
-        if not docs:
-            return "无文本上下文。"
-
-        lines: list[str] = []
-        for index, doc in enumerate(docs, start=1):
-            lines.append(
-                "\n".join(
-                    [
-                        f"[文本上下文{index}]",
-                        f"菜谱ID：{doc.metadata.get('recipe_id') or doc.metadata.get('node_id')}",
-                        f"融合来源：{doc.metadata.get('fusion_sources')}",
-                        f"融合分数：{doc.metadata.get('fusion_score')}",
-                        f"来源：{doc.metadata.get('source')}",
-                        doc.page_content,
-                    ]
-                )
-            )
-
-        return "\n\n".join(lines)

@@ -1,38 +1,37 @@
 from __future__ import annotations
 
-import sys
-from types import ModuleType
-
 from langchain_core.documents import Document
 
-from fakes import FakeChatModel, FakeVectorStoreService
+from fakes import FakeRetriever
+from recipe_assistant.schemas.retrieval import RetrievalRequest, RetrievalStrategy
+from recipe_assistant.services.retrieval import RetrievalService
 
 
-def test_rag_retrieves_context_and_invokes_chat_model(
-    monkeypatch,
-    fresh_import,
-) -> None:
+def test_retrieval_service_returns_vector_evidence_without_answer_facade() -> None:
     documents = [
         Document(
             page_content="白灼虾：水开后放入虾，煮熟后捞出。",
-            metadata={"recipe_id": "recipe-shrimp", "source": "白灼虾.md"},
+            metadata={
+                "recipe_id": "recipe-shrimp",
+                "recipe_name": "白灼虾",
+                "source_path": "白灼虾.md",
+            },
         )
     ]
-    vector_service = FakeVectorStoreService(documents)
-    fake_model = FakeChatModel(response_text="白灼虾离线基线回答")
+    retriever = FakeRetriever(documents)
+    service = RetrievalService(
+        graph_retriever=None,
+        vector_retriever=retriever,
+        bm25_retriever=None,
+    )
 
-    vector_module = ModuleType("rag.vector_store")
-    vector_module.VectorStoreService = lambda: vector_service
-    model_module = ModuleType("model.factory")
-    model_module.chat_model = fake_model
+    result = service.retrieve(
+        RetrievalRequest(
+            query="白灼虾怎么做？",
+            strategy=RetrievalStrategy.VECTOR_ONLY,
+        )
+    )
 
-    monkeypatch.setitem(sys.modules, "rag.vector_store", vector_module)
-    monkeypatch.setitem(sys.modules, "model.factory", model_module)
-
-    rag_module = fresh_import("rag.rag_service")
-    service = rag_module.RagSummarizeService()
-
-    assert service.retriever_docs("白灼虾怎么做？") == documents
-    assert service.rag_summarize("白灼虾怎么做？") == "白灼虾离线基线回答"
-    assert fake_model.invocation_count == 1
-    assert vector_service.retriever.queries[-1][0] == "白灼虾怎么做？"
+    assert result.hits[0].recipe_id == "recipe-shrimp"
+    assert result.hits[0].content == documents[0].page_content
+    assert retriever.queries[-1][0] == "白灼虾怎么做？"
