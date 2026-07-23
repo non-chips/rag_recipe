@@ -4,7 +4,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import AliasChoices, Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     log_level: str = "INFO"
     agent_runtime_mode: Literal["v2"] = "v2"
-    legacy_fallback_enabled: Literal[False] = False
+    legacy_fallback_enabled: bool = False
 
     chat_enabled: bool = True
     chat_model: str = "deepseek-v4-flash"
@@ -64,6 +64,12 @@ class Settings(BaseSettings):
     amap_api_key: SecretStr | None = None
     amap_base_url: str = "https://restapi.amap.com"
     amap_timeout_seconds: float = Field(default=8.0, gt=0.0)
+
+    @model_validator(mode="after")
+    def reject_legacy_fallback(self) -> "Settings":
+        if self.legacy_fallback_enabled:
+            raise ValueError("legacy fallback is no longer supported")
+        return self
 
     def resolve_project_path(self, value: Path) -> Path:
         """Resolve a configured local path without requiring the process CWD."""
