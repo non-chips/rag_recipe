@@ -1,9 +1,12 @@
-import os
-from dotenv import load_dotenv
-from model.factory import chat_model, embed_model
+"""Manual embedding smoke test for the retained vector infrastructure."""
+
+from rag.vector_store import embed_model
 
 
-load_dotenv()
+def main() -> None:
+    vector = embed_model.embed_query("番茄炒鸡蛋")
+    print(f"embedding dimensions: {len(vector)}")
 
-print('DeepSeek:', bool(os.getenv('DEEPSEEK_API_KEY'))); print('Amap:', bool(os.getenv('AMAP_API_KEY')))
-print(chat_model.invoke('只回答：模型连接正常').content); print(len(embed_model.embed_query('番茄炒鸡蛋')))
+
+if __name__ == "__main__":
+    main()

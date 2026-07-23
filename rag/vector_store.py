@@ -5,11 +5,11 @@ from typing import Any
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from model.factory import embed_model
 from graph.recipe_parser import make_node_id
-from utils.config_handler import chroma_conf
+from utils.config_handler import chroma_conf, rag_conf
 from utils.file_handler import (
     get_file_md5_hex,
     listdir_with_allowed_type,
@@ -19,6 +19,29 @@ from utils.file_handler import (
 )
 from utils.logger_handler import logger
 from utils.path_tool import get_abs_path
+
+
+def _build_embedding_model() -> HuggingFaceEmbeddings:
+    model_path = get_abs_path(
+        rag_conf.get(
+            "embedding_model_path",
+            "model/embeddingmodels/bge-small-zh-v1.5",
+        )
+    )
+    if not os.path.isdir(model_path):
+        raise FileNotFoundError(f"本地嵌入模型目录不存在：{model_path}")
+    return HuggingFaceEmbeddings(
+        model_name=model_path,
+        model_kwargs={
+            "device": rag_conf.get("embedding_device", "cpu"),
+            "local_files_only": bool(rag_conf.get("embedding_offline", True)),
+        },
+        encode_kwargs={"normalize_embeddings": True},
+    )
+
+
+embed_model = _build_embedding_model()
+
 
 # 父子块检索类
 class ParentChildRetriever:

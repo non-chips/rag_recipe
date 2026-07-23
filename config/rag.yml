@@ -1,10 +1,4 @@
-chat_model_name: deepseek-v4-flash
-chat_base_url: https://api.deepseek.com
-chat_api_key_env: DEEPSEEK_API_KEY
-
 embedding_provider: huggingface
 embedding_model_path: model/embeddingmodels/bge-small-zh-v1.5
 embedding_device: cpu
 embedding_offline: true
-
-temperature: 0.2
