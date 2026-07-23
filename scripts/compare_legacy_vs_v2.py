@@ -21,7 +21,6 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from agent.routing.query_router import RecipeQueryRouter  # noqa: E402
 from recipe_assistant.agents.coordinator import RecipeCoordinator  # noqa: E402
 from recipe_assistant.agents.events import (  # noqa: E402
     AgentArtifact,
@@ -97,14 +96,25 @@ class _OfflineLegacyStreamAgent:
     """Exercise the legacy stream/adapter contract without external LLM calls."""
 
     def __init__(self) -> None:
-        self.router = RecipeQueryRouter()
+        self.router = BusinessRouter()
         self.calls: Counter[str] = Counter()
         self.last_plan: dict[str, Any] = {}
 
     def execute_stream(self, query: str, thread_id: str):
         self.calls["ReactAgent.execute_stream"] += 1
         self.calls[f"thread:{thread_id}"] += 1
-        self.last_plan = self.router.route(query, mode="rule")
+        decision = self.router.route(query)
+        retrieval_method = {
+            "RECIPE_KNOWLEDGE": "vector_search",
+            "RECIPE_RECOMMENDATION": "hybrid_search",
+            "NUTRITION_PLANNING": "hybrid_search",
+            "COMPLEX": "hybrid_search",
+            "SIMPLE": None,
+        }[decision.route.value]
+        self.last_plan = {
+            "retrieval_method": retrieval_method,
+            "route": decision.route.value,
+        }
         yield "【思考过程】\n离线对照不暴露内部推理"
         yield f"\n\n【思考过程】\n旧链路离线契约回答：{query}"
 
@@ -205,8 +215,8 @@ class ParityEvaluator:
             "methodology": {
                 "mode": self.dataset["methodology"],
                 "legacy": (
-                    "Actual LegacyReactAgentAdapter and RecipeQueryRouter(rule mode), "
-                    "with an offline stream agent replacing external LLM/tools."
+                    "Frozen offline answer contract with BusinessRouter route mapping; "
+                    "no removed legacy Tool or route module is loaded."
                 ),
                 "v2": (
                     "Actual BusinessRouter and domain services with in-memory SQLite "

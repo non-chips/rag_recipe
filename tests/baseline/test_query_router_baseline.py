@@ -1,30 +1,17 @@
-from agent.routing.query_router import RecipeQueryRouter
+from recipe_assistant.agents.router import BusinessRouter
+from recipe_assistant.schemas.agent.route import RouteType
 
 
-def test_rule_router_selects_graph_for_structured_fact() -> None:
-    result = RecipeQueryRouter().route(
-        "西红柿鸡蛋汤需要哪些食材？",
-        mode="rule",
-    )
-
-    assert result["retrieval_method"] == "graph_search"
-    assert result["query_type"] == "structured_fact"
-    assert result["llm_used"] is False
+def test_business_router_selects_knowledge_for_how_to_question() -> None:
+    result = BusinessRouter().route("白灼虾怎么做？")
+    assert result.route is RouteType.RECIPE_KNOWLEDGE
 
 
-def test_rule_router_selects_vector_for_how_to_question() -> None:
-    result = RecipeQueryRouter().route("白灼虾怎么做？", mode="rule")
-
-    assert result["retrieval_method"] == "vector_search"
-    assert result["query_type"] == "how_to"
+def test_business_router_selects_recommendation_for_dinner_request() -> None:
+    result = BusinessRouter().route("推荐一道适合晚饭的菜")
+    assert result.route is RouteType.RECIPE_RECOMMENDATION
 
 
-def test_rule_router_selects_hybrid_for_comparison() -> None:
-    result = RecipeQueryRouter().route(
-        "对比西红柿鸡蛋汤和紫菜蛋花汤哪个更适合晚餐",
-        mode="rule",
-    )
-
-    assert result["retrieval_method"] == "hybrid_search"
-    assert result["needs_comparison"] is True
-    assert result["inference_need"] == "comparison"
+def test_business_router_selects_complex_for_multi_domain_request() -> None:
+    result = BusinessRouter().route("根据上周营养情况推荐今晚菜谱")
+    assert result.route is RouteType.COMPLEX
