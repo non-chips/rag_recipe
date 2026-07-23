@@ -27,7 +27,6 @@ from recipe_assistant.agents.events import (  # noqa: E402
     ArtifactKind,
     ExpertCapability,
 )
-from recipe_assistant.agents.harness import LegacyReactAgentAdapter  # noqa: E402
 from recipe_assistant.agents.registry import ExpertRegistry  # noqa: E402
 from recipe_assistant.agents.result import ProfileSnapshot, RunContext  # noqa: E402
 from recipe_assistant.agents.router import BusinessRouter  # noqa: E402
@@ -100,7 +99,7 @@ class _OfflineLegacyStreamAgent:
         self.calls: Counter[str] = Counter()
         self.last_plan: dict[str, Any] = {}
 
-    def execute_stream(self, query: str, thread_id: str):
+    def execute(self, query: str, thread_id: str) -> str:
         self.calls["ReactAgent.execute_stream"] += 1
         self.calls[f"thread:{thread_id}"] += 1
         decision = self.router.route(query)
@@ -115,8 +114,7 @@ class _OfflineLegacyStreamAgent:
             "retrieval_method": retrieval_method,
             "route": decision.route.value,
         }
-        yield "【思考过程】\n离线对照不暴露内部推理"
-        yield f"\n\n【思考过程】\n旧链路离线契约回答：{query}"
+        return f"旧链路冻结契约回答：{query}"
 
 
 class _FailingGraph:
@@ -193,7 +191,6 @@ class ParityEvaluator:
         self.dataset_path = dataset_path
         self.dataset = json.loads(dataset_path.read_text(encoding="utf-8"))
         self.legacy_agent = _OfflineLegacyStreamAgent()
-        self.legacy_adapter = LegacyReactAgentAdapter(self.legacy_agent)
         self.business_router = BusinessRouter()
 
     def run(self) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -262,7 +259,7 @@ class ParityEvaluator:
         observation = _empty_observation("ReactAgent(query, thread_id)")
         if case["probe"] in {"chat", "weather", "constraint", "nutrition"}:
             before = Counter(self.legacy_agent.calls)
-            answer = self.legacy_adapter.execute(case["input"], f"parity-{case['id']}")
+            answer = self.legacy_agent.execute(case["input"], f"parity-{case['id']}")
             plan = self.legacy_agent.last_plan
             delta = self.legacy_agent.calls - before
             observation.update(

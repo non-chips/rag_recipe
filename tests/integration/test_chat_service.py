@@ -2,8 +2,12 @@ from __future__ import annotations
 
 from sqlalchemy import func, select
 
-from recipe_assistant.agents.harness import RecipeAgentHarness
-from recipe_assistant.agents.result import ChatRequest, RunStatus
+from recipe_assistant.agents.result import (
+    AgentRunResult,
+    ChatRequest,
+    HarnessOutcome,
+    RunStatus,
+)
 from recipe_assistant.agents.router import BusinessRouter
 from recipe_assistant.core.database import (
     Base,
@@ -21,25 +25,58 @@ from recipe_assistant.services.chat import ChatService
 from recipe_assistant.services.simple_chat import SimpleChatService
 
 
-class _Executor:
+class _Harness:
     def __init__(self, *, fail: bool = False) -> None:
         self.fail = fail
         self.calls: list[tuple[str, str]] = []
 
-    def execute(self, query: str, thread_id: str) -> str:
-        self.calls.append((query, thread_id))
+    @staticmethod
+    def normalize_input(text: str) -> str:
+        return " ".join(text.strip().split())
+
+    def run(self, context):
+        decision = BusinessRouter().route(context.normalized_input)
+        if decision.route.value == "SIMPLE":
+            response = SimpleChatService().respond(context.normalized_input)
+            result = AgentRunResult(
+                status=RunStatus.SUCCEEDED,
+                final_text=response.message,
+                events=[{"type": "simple_chat"}],
+            )
+            return HarnessOutcome(
+                context=context,
+                route_decision=decision,
+                result=result,
+                latency_ms=0.0,
+            )
+        self.calls.append((context.normalized_input, context.session_public_id))
         if self.fail:
-            raise RuntimeError("executor failed")
-        return f"最终回答：{query}"
+            result = AgentRunResult(
+                status=RunStatus.FAILED,
+                final_text="抱歉，本次请求暂时无法完成，请稍后重试。",
+                events=[{"type": "execution_error", "error": "executor failed"}],
+                error="executor failed",
+            )
+        else:
+            result = AgentRunResult(
+                status=RunStatus.SUCCEEDED,
+                final_text=f"最终回答：{context.normalized_input}",
+                events=[{"type": "v2_test_runtime"}],
+            )
+        return HarnessOutcome(
+            context=context,
+            route_decision=decision,
+            result=result,
+            latency_ms=0.0,
+        )
 
 
 def _build_service(*, fail: bool = False):
     engine = create_database_engine("sqlite:///:memory:")
     Base.metadata.create_all(engine)
     factory = create_session_factory(engine)
-    executor = _Executor(fail=fail)
-    harness = RecipeAgentHarness(BusinessRouter(), SimpleChatService(), executor)
-    return engine, factory, executor, ChatService(factory, harness)
+    harness = _Harness(fail=fail)
+    return engine, factory, harness, ChatService(factory, harness)
 
 
 def test_chat_service_creates_and_restores_session_with_profile_history_and_trace() -> None:

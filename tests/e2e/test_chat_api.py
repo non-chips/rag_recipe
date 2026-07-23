@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
-from recipe_assistant.agents.harness import RecipeAgentHarness
+from recipe_assistant.agents.result import AgentRunResult, HarnessOutcome, RunStatus
 from recipe_assistant.agents.router import BusinessRouter
 from recipe_assistant.api.application import ApiApplicationService
 from recipe_assistant.api.dependencies import ApiContainer
@@ -15,12 +15,29 @@ from recipe_assistant.main import create_app
 from recipe_assistant.repositories.sqlite import SqlAlchemyUserRepository
 from recipe_assistant.services.chat import ChatService
 from recipe_assistant.services.nutrition import NutritionCatalog
-from recipe_assistant.services.simple_chat import SimpleChatService
 
 
-class _OfflineExecutor:
-    def execute(self, query: str, thread_id: str) -> str:
-        return f"离线回答：{query}（会话 {thread_id}）"
+class _OfflineHarness:
+    @staticmethod
+    def normalize_input(text: str) -> str:
+        return " ".join(text.strip().split())
+
+    def run(self, context):
+        decision = BusinessRouter().route(context.normalized_input)
+        result = AgentRunResult(
+            status=RunStatus.SUCCEEDED,
+            final_text=(
+                f"离线回答（V2）：{context.normalized_input}"
+                f"（会话 {context.session_public_id}）"
+            ),
+            events=[{"type": "v2_test_runtime"}],
+        )
+        return HarnessOutcome(
+            context=context,
+            route_decision=decision,
+            result=result,
+            latency_ms=0.0,
+        )
 
 
 def _parse_sse(body: str) -> list[dict]:
@@ -43,11 +60,7 @@ def test_chat_sse_persists_session_messages_and_trace() -> None:
     Base.metadata.create_all(engine)
     with session_scope(factory) as session:
         user_id = SqlAlchemyUserRepository(session).create("chat-user", "hash").id
-    harness = RecipeAgentHarness(
-        BusinessRouter(),
-        SimpleChatService(),
-        _OfflineExecutor(),
-    )
+    harness = _OfflineHarness()
     container = ApiContainer(
         engine=engine,
         session_factory=factory,
