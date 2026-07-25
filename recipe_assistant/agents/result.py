@@ -58,6 +58,9 @@ class RunContext(BaseModel):
     session_public_id: str
     original_input: str
     normalized_input: str
+    routing_input: str = ""
+    retrieval_input: str = ""
+    conversation_context: dict[str, Any] = Field(default_factory=dict)
     profile: ProfileSnapshot
     history: list[MemoryMessage] = Field(default_factory=list)
     started_at: datetime = Field(default_factory=utc_now)

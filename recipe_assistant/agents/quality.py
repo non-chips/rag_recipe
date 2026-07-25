@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import Any, ClassVar
 
@@ -151,6 +152,19 @@ class GuardrailAgent:
         "生吃猪肉",
         "raw pork",
     )
+    _MISSING_RECIPE_PHRASES = (
+        "不包含",
+        "没有找到",
+        "未找到",
+        "找不到",
+        "不存在",
+        "没有相关食谱",
+        "没有这道菜",
+    )
+    _UNVERIFIED_ACTION_PATTERN = re.compile(
+        r"(?:已|已经)(?:为(?:您|你)|帮(?:您|你)).{0,6}(?:记录|保存|添加)"
+        r"|(?:记录|保存|添加)(?:完成|成功|好了)"
+    )
 
     def __init__(self) -> None:
         self.constraint_service = ConstraintService()
@@ -275,6 +289,41 @@ class GuardrailAgent:
             violations.append("food_safety_conflict")
             rejected_ids.update(candidate.recipe_id for candidate in candidates)
 
+        message = str(proposal.payload.get("message") or "")
+        supported_recipe_names = {
+            str(item.get("recipe_name") or "").strip()
+            for item in evidence
+            if str(item.get("source_path") or "").strip()
+            and str(item.get("content") or item.get("evidence") or "").strip()
+        }
+        supported_recipe_names.update(
+            candidate.recipe_name.strip()
+            for candidate in candidates
+            if candidate.recipe_name.strip()
+            and candidate.source_path.strip()
+            and candidate.evidence.strip()
+        )
+        if any(phrase in message for phrase in self._MISSING_RECIPE_PHRASES) and any(
+            recipe_name in message
+            for recipe_name in supported_recipe_names
+            if recipe_name
+        ):
+            violations.append("contradictory_missing_recipe_claim")
+
+        action_confirmed = any(
+            bool(
+                artifact.payload.get("action_confirmed")
+                or artifact.payload.get("write_receipt")
+                or artifact.payload.get("interaction_id")
+            )
+            for artifact in board.artifacts
+        )
+        if (
+            self._UNVERIFIED_ACTION_PATTERN.search(message)
+            and not action_confirmed
+        ):
+            violations.append("unverified_action_claim")
+
         violations = list(dict.fromkeys(violations))
         approved = not violations
         kind = ArtifactKind.REVIEW if approved else ArtifactKind.CRITIQUE
@@ -291,6 +340,8 @@ class GuardrailAgent:
                 "max_time_minutes",
                 "retrieval_evidence",
                 "food_safety",
+                "recipe_existence_consistency",
+                "action_receipt_required",
             ),
         }
         return AgentArtifact(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Iterator
 
 from fastapi import APIRouter, Depends
@@ -22,6 +23,7 @@ from recipe_assistant.schemas.api import (
 
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
+logger = logging.getLogger("recipe_assistant.api.chat")
 
 
 @router.post(
@@ -85,6 +87,13 @@ def stream_chat(
                 ErrorEvent(code="ACCESS_DENIED", message=str(exc), retryable=False)
             )
         except Exception:
+            logger.exception(
+                "Unhandled chat stream failure",
+                extra={
+                    "chat_user_id": user_id,
+                    "chat_session_id": payload.session_id or "",
+                },
+            )
             yield encode_sse(
                 ErrorEvent(
                     code="CHAT_EXECUTION_FAILED",

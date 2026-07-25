@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import MappingProxyType
+
 from sqlalchemy import func, select
 
 from recipe_assistant.agents.result import (
@@ -62,6 +64,12 @@ class _Harness:
                 status=RunStatus.SUCCEEDED,
                 final_text=f"最终回答：{context.normalized_input}",
                 events=[{"type": "v2_test_runtime"}],
+                token_usage={
+                    "input_tokens": 10,
+                    "input_token_details": MappingProxyType(
+                        {"cache_read": 4}
+                    ),
+                },
             )
         return HarnessOutcome(
             context=context,
@@ -124,6 +132,10 @@ def test_chat_service_creates_and_restores_session_with_profile_history_and_trac
         assert len(traces) == 2
         assert SqlAlchemyTraceRepository(session).get_by_run_id(second.run_id) is not None
         assert traces[-1].route == "RECIPE_KNOWLEDGE"
+        assert traces[-1].token_usage_json == {
+            "input_tokens": 10,
+            "input_token_details": {"cache_read": 4},
+        }
 
     engine.dispose()
 
@@ -142,5 +154,22 @@ def test_failed_executor_still_saves_final_message_and_trace() -> None:
         trace = session.scalar(select(AgentRunTrace))
         assert trace is not None
         assert trace.events_json[-1]["type"] == "execution_error"
+
+    engine.dispose()
+
+
+def test_new_session_does_not_inherit_another_sessions_history() -> None:
+    engine, factory, _executor, service = _build_service()
+    with session_scope(factory) as session:
+        user_id = SqlAlchemyUserRepository(session).create(
+            "isolated-history-user",
+            "hash",
+        ).id
+
+    first = service.run(ChatRequest(user_id=user_id, message="凉皮怎么做？"))
+    second = service.run(ChatRequest(user_id=user_id, message="那这个呢？"))
+
+    assert first.session_public_id != second.session_public_id
+    assert second.outcome.context.history == []
 
     engine.dispose()

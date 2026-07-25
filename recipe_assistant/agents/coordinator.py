@@ -694,6 +694,30 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
                             metadata={"kind": artifact.kind.value},
                         )
                     )
+                    if artifact.metadata.get("purpose") in {
+                        "response_generation",
+                        "route_classification",
+                    }:
+                        board = board.append_event(
+                            AgentEvent(
+                                event_type=EventType.LLM_COMPLETED,
+                                actor=expert.name,
+                                task_id=task.id,
+                                artifact_id=artifact.id,
+                                message=str(artifact.metadata["purpose"]),
+                                metadata={
+                                    key: artifact.metadata.get(key)
+                                    for key in (
+                                        "llm_used",
+                                        "model_name",
+                                        "purpose",
+                                        "latency_ms",
+                                        "fallback_reason",
+                                        "token_usage",
+                                    )
+                                },
+                            )
+                        )
                     if artifact.kind in {ArtifactKind.REVIEW, ArtifactKind.CRITIQUE}:
                         board = board.append_event(
                             AgentEvent(
@@ -1059,6 +1083,7 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
         board: CollaborationBlackboard,
     ) -> tuple[dict[str, str], ...]:
         relevant_kinds = {
+            ArtifactKind.CONVERSATION_CONTEXT,
             ArtifactKind.QUERY_CONSTRAINTS,
             ArtifactKind.RECIPE_EVIDENCE,
             ArtifactKind.RECIPE_CANDIDATES,

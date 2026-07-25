@@ -4,7 +4,9 @@ from recipe_assistant.agents.coordinator import CoordinationStatus, RecipeCoordi
 from recipe_assistant.agents.events import ArtifactKind, EventType
 from recipe_assistant.agents.experts.recipe_knowledge import RecipeKnowledgeExpert
 from recipe_assistant.agents.registry import ExpertRegistry
-from recipe_assistant.agents.result import ProfileSnapshot, RunContext
+from recipe_assistant.agents.result import MemoryMessage, ProfileSnapshot, RunContext
+from recipe_assistant.core.database import utc_now
+from recipe_assistant.models import MessageRole
 from recipe_assistant.agents.runtime import RecipeAgentRuntime
 from recipe_assistant.schemas.agent.route import RouteDecision, RouteType
 from recipe_assistant.schemas.retrieval import RetrievalHit, RetrievalResult, RetrievalStrategy
@@ -13,7 +15,11 @@ from recipe_assistant.tools.registry import ToolRegistry
 
 
 class _OfflineRetrievalService:
+    def __init__(self) -> None:
+        self.queries: list[str] = []
+
     def retrieve(self, request):
+        self.queries.append(request.query)
         return RetrievalResult(
             query=request.query,
             strategy=RetrievalStrategy.VECTOR_ONLY,
@@ -62,3 +68,47 @@ def test_recipe_question_runs_through_real_knowledge_expert() -> None:
         and event.actor == "recipe_knowledge_expert"
         for event in outcome.blackboard.events
     )
+
+
+def test_follow_up_history_becomes_context_artifact_and_retrieval_query() -> None:
+    service = _OfflineRetrievalService()
+    tools = ToolRegistry([create_recipe_knowledge_tool(service)])  # type: ignore[arg-type]
+    expert = RecipeKnowledgeExpert(tools)
+    runtime = RecipeAgentRuntime(RecipeCoordinator(ExpertRegistry([expert])))
+
+    outcome = runtime.run(
+        RunContext(
+            run_id="run-e2e-follow-up",
+            user_id=11,
+            session_id=21,
+            session_public_id="recipe-session",
+            original_input="黄瓜不新鲜了，可以拿什么替换？",
+            normalized_input="黄瓜不新鲜了，可以拿什么替换？",
+            profile=ProfileSnapshot(),
+            history=[
+                MemoryMessage(
+                    role=MessageRole.USER,
+                    content="那凉皮怎么做？",
+                    created_at=utc_now(),
+                ),
+                MemoryMessage(
+                    role=MessageRole.ASSISTANT,
+                    content="凉皮需要黄瓜丝、豆芽和面筋。",
+                    created_at=utc_now(),
+                ),
+            ],
+        ),
+        RouteDecision(
+            route=RouteType.RECIPE_KNOWLEDGE,
+            confidence=0.99,
+            reason="contextual knowledge question",
+        ),
+    )
+
+    context_artifacts = outcome.blackboard.artifacts_for(
+        kind=ArtifactKind.CONVERSATION_CONTEXT
+    )
+    assert len(context_artifacts) == 1
+    assert context_artifacts[0].payload["context_applied"] is True
+    assert "凉皮" in service.queries[0]
+    assert "黄瓜不新鲜" in service.queries[0]

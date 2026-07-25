@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     chat_temperature: float = Field(default=0.2, ge=0.0, le=2.0)
     chat_timeout_seconds: float = Field(default=60.0, gt=0.0)
     chat_max_retries: int = Field(default=2, ge=0)
+    chat_response_max_chars: int = Field(default=8000, gt=0)
+    chat_context_min_confidence: float = Field(default=0.7, ge=0.0, le=1.0)
 
     embedding_enabled: bool = True
     embedding_model_path: Path = Path("model/embeddingmodels/bge-small-zh-v1.5")

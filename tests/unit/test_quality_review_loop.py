@@ -180,6 +180,58 @@ def test_specific_recipe_facts_without_evidence_are_rejected() -> None:
     assert "missing_retrieval_evidence" in critique.payload["violations"]
 
 
+def test_recipe_absence_claim_conflicting_with_evidence_is_rejected() -> None:
+    candidate = {
+        **_candidate(recipe_id="kou-shui-ji"),
+        "recipe_name": "口水鸡",
+        "source_path": "recipes/口水鸡.md",
+        "evidence": "口水鸡是一道适合夏天的凉菜。",
+    }
+    board, task = _review_board(
+        proposal_payload={
+            "message": "目前的食谱中不包含“口水鸡”的详细做法。",
+            "answer_mode": "evidence_grounded_recipe_knowledge",
+            "candidates": (candidate,),
+            "evidence": (
+                {
+                    "recipe_id": "kou-shui-ji",
+                    "recipe_name": "口水鸡",
+                    "source_path": "recipes/口水鸡.md",
+                    "content": "口水鸡是一道适合夏天的凉菜。",
+                },
+            ),
+        }
+    )
+
+    critique = GuardrailAgent().execute(task, board)
+
+    assert critique.kind is ArtifactKind.CRITIQUE
+    assert "contradictory_missing_recipe_claim" in critique.payload["violations"]
+
+
+def test_unverified_recording_claim_is_rejected() -> None:
+    board, task = _review_board(
+        proposal_payload={
+            "message": "好的，已为您记录凉拌豆腐。",
+            "answer_mode": "evidence_grounded_recipe_knowledge",
+            "candidates": (),
+            "evidence": (
+                {
+                    "recipe_id": "cold-tofu",
+                    "recipe_name": "凉拌豆腐",
+                    "source_path": "recipes/凉拌豆腐.md",
+                    "content": "凉拌豆腐的食谱内容。",
+                },
+            ),
+        }
+    )
+
+    critique = GuardrailAgent().execute(task, board)
+
+    assert critique.kind is ArtifactKind.CRITIQUE
+    assert "unverified_action_claim" in critique.payload["violations"]
+
+
 @dataclass
 class _RecommendationExpert:
     name: str = "recommendation"

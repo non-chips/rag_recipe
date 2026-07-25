@@ -108,6 +108,9 @@ class BusinessRouter:
     def route(self, query: str) -> RouteDecision:
         """Use L1 rules first and invoke L2 only for a low-confidence decision."""
 
+        reset_trace = getattr(self.classifier, "reset_trace", None)
+        if callable(reset_trace):
+            reset_trace()
         normalized_query = (query or "").strip()
         rule_decision = self._rule_route(normalized_query)
         if (

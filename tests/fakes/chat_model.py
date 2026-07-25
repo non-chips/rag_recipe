@@ -13,6 +13,7 @@ class FakeChatModel(BaseChatModel):
     response_text: str = "离线模型回答"
     invocation_count: int = 0
     bound_tool_count: int = 0
+    last_messages: list[Any] = []
 
     @property
     def _llm_type(self) -> str:
@@ -25,7 +26,8 @@ class FakeChatModel(BaseChatModel):
         run_manager: Any = None,
         **kwargs: Any,
     ) -> ChatResult:
-        del messages, stop, run_manager, kwargs
+        del stop, run_manager, kwargs
+        self.last_messages = list(messages)
         self.invocation_count += 1
         return ChatResult(
             generations=[

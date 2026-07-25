@@ -43,10 +43,16 @@ class ApiContainer:
         resolved_settings = settings or get_settings()
         engine = create_database_engine()
         session_factory = create_session_factory(engine)
+        resources = ResourceContainer(resolved_settings)
         harness = build_runtime_harness(
             resolved_settings,
             session_factory,
             coordination_mode=resolved_settings.agent_coordination_mode,
+            chat_model_provider=(
+                resources.get_chat_model
+                if resolved_settings.chat_enabled
+                else None
+            ),
         )
         catalog_path = Path(PROJECT_ROOT) / "data" / "nutrition" / "recipes.json"
         catalog = (
@@ -59,7 +65,7 @@ class ApiContainer:
             session_factory=session_factory,
             chat_runner=ChatService(session_factory, harness),
             application=ApiApplicationService(session_factory, catalog),
-            resources=ResourceContainer(resolved_settings),
+            resources=resources,
         )
 
     def startup(self) -> None:

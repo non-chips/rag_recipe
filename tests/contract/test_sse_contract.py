@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 from types import SimpleNamespace
 
 import pytest
@@ -108,10 +109,18 @@ def test_sse_forwards_only_explicit_runtime_tokens_in_stable_order() -> None:
 
 
 def test_sse_failure_always_uses_versioned_error_contract() -> None:
-    with _stream_client(_StreamingRunner(error=TimeoutError("late"))) as client:
-        response = client.post("/api/chat/stream", json={"message": "test"})
+    with patch("recipe_assistant.api.chat.logger.exception") as log_exception:
+        with _stream_client(_StreamingRunner(error=TimeoutError("late"))) as client:
+            response = client.post("/api/chat/stream", json={"message": "test"})
 
     events = _event_payloads(response.text)
+    log_exception.assert_called_once_with(
+        "Unhandled chat stream failure",
+        extra={
+            "chat_user_id": 1,
+            "chat_session_id": "",
+        },
+    )
     assert events == [
         {
             "version": "1.0",

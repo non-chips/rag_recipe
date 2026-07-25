@@ -19,12 +19,22 @@ from recipe_assistant.agents.coordinator import (
     CoordinatorOutcome,
     RecipeCoordinator,
 )
+from recipe_assistant.agents.context import (
+    ConversationContextResolver,
+    build_conversation_context,
+)
 from recipe_assistant.agents.events import (
     AgentArtifact,
     ArtifactKind,
     ClaimDecision,
     ExpertCapability,
     thaw_value,
+)
+from recipe_assistant.agents.llm import (
+    ChatModelProvider,
+    LLMConversationContextAgent,
+    LLMResponseAgent,
+    LLMRouteClassifier,
 )
 from recipe_assistant.agents.experts.nutrition_planning import NutritionPlanningExpert
 from recipe_assistant.agents.experts.recipe_knowledge import (
@@ -154,14 +164,19 @@ class _RuntimeExpertDispatcher:
         return handlers[task.title](task, board)
 
     def _complex_candidates(self, task, board) -> AgentArtifact:
-        constraints = RecipeRecommendationExpert._parse_constraints(board.user_input)
+        constraints = RecipeRecommendationExpert._parse_constraints(
+            board.retrieval_query
+        )
         preferences = self.preference_provider(board.user_id)
         weather = (
             self.weather_service.get_current(constraints.city)
             if constraints.city
             else None
         )
-        recall = self.recommendation_service.recall(board.user_input, top_k=20)
+        recall = self.recommendation_service.recall(
+            board.retrieval_query,
+            top_k=20,
+        )
         ranked = RecommendationService.rank_candidates(
             recall.candidates,
             constraints,
@@ -189,7 +204,7 @@ class _RuntimeExpertDispatcher:
             if item.source_path
         )
         payload = RecipeEvidence(
-            query=board.user_input,
+            query=board.retrieval_query,
             items=items,
             retrieval_confidence=1.0 if items else 0.0,
             warnings=candidates.warnings,
@@ -201,7 +216,9 @@ class _RuntimeExpertDispatcher:
     def _complex_validation(self, task, board) -> AgentArtifact:
         validation = self.constraint_service.validate(
             self._candidate_set(board).candidates,
-            RecipeRecommendationExpert._parse_constraints(board.user_input),
+            RecipeRecommendationExpert._parse_constraints(
+                board.retrieval_query
+            ),
             self.preference_provider(board.user_id),
         )
         return self._artifact(
@@ -276,6 +293,11 @@ class ArtifactResponseRenderer:
         payload = thaw_value(artifact.payload)
         if artifact.kind is ArtifactKind.ERROR:
             text = str(payload.get("message") or "当前协作结果不完整，请稍后重试。")
+        elif (
+            artifact.kind is ArtifactKind.RESPONSE_PROPOSAL
+            and artifact.metadata.get("llm_used") is True
+        ):
+            text = str(payload.get("message") or "")
         elif payload.get("candidates"):
             text = self._render_candidates(payload)
         elif payload.get("evidence"):
@@ -332,12 +354,14 @@ class MultiExpertHarness:
         router: BusinessRouter | None = None,
         simple_chat: SimpleChatService | None = None,
         renderer: ArtifactResponseRenderer | None = None,
+        context_resolver: ConversationContextResolver | None = None,
     ) -> None:
         self.mode = "v2"
         self.runtime_provider = runtime_provider
         self.router = router or BusinessRouter()
         self.simple_chat = simple_chat or SimpleChatService()
         self.renderer = renderer or ArtifactResponseRenderer()
+        self.context_resolver = context_resolver
 
     @staticmethod
     def normalize_input(text: str) -> str:
@@ -345,8 +369,55 @@ class MultiExpertHarness:
 
     def run(self, context: RunContext) -> HarnessOutcome:
         started_at = perf_counter()
-        decision = self.router.route(context.normalized_input)
+        conversation_context = build_conversation_context(
+            context.history,
+            context.normalized_input,
+        )
+        if self.context_resolver is not None:
+            conversation_context = self.context_resolver.resolve(
+                context.history,
+                context.normalized_input,
+                conversation_context,
+            )
+        context = context.model_copy(
+            update={
+                "routing_input": conversation_context["routing_query"],
+                "retrieval_input": conversation_context["retrieval_query"],
+                "conversation_context": conversation_context,
+            }
+        )
+        decision = self.router.route(context.routing_input)
         events: list[dict[str, Any]] = [
+            {
+                "type": "context_resolution",
+                "context_applied": bool(
+                    conversation_context.get("context_applied")
+                ),
+                "resolution_source": conversation_context.get(
+                    "resolution_source",
+                    "none",
+                ),
+                "resolution_confidence": conversation_context.get(
+                    "resolution_confidence",
+                    0.0,
+                ),
+                "resolved_intent": conversation_context.get(
+                    "resolved_intent",
+                    "",
+                ),
+                "resolved_recipe_names": list(
+                    conversation_context.get("resolved_recipe_names") or []
+                ),
+                "recommended_recipe_names": list(
+                    conversation_context.get("recommended_recipe_names") or []
+                ),
+                "rewritten_query": conversation_context["retrieval_query"],
+            }
+        ]
+        context_llm_trace = conversation_context.get("llm_trace")
+        if context_llm_trace:
+            events.append(dict(context_llm_trace))
+        events.append(
             {
                 "type": "route",
                 "route": decision.route.value,
@@ -354,10 +425,22 @@ class MultiExpertHarness:
                 "reason": decision.reason,
                 "runtime_mode": self.mode,
             }
-        ]
+        )
+        classifier = getattr(self.router, "classifier", None)
+        route_llm_trace = getattr(classifier, "last_trace", None)
+        if route_llm_trace:
+            events.append(dict(route_llm_trace))
         sources: list[dict[str, Any]] = []
+        streamed_tokens: list[str] = []
+        token_usage: dict[str, Any] = {}
         try:
-            final_text, sources, runtime_events = self._v2(context, decision)
+            (
+                final_text,
+                sources,
+                runtime_events,
+                streamed_tokens,
+                token_usage,
+            ) = self._v2(context, decision)
             events.extend(runtime_events)
             status = RunStatus.SUCCEEDED
             error = None
@@ -378,6 +461,8 @@ class MultiExpertHarness:
             final_text=final_text,
             events=events,
             sources=sources,
+            token_usage=token_usage,
+            streamed_tokens=streamed_tokens,
             used_legacy_executor=False,
             error=error,
         )
@@ -392,33 +477,61 @@ class MultiExpertHarness:
         self,
         context: RunContext,
         decision: RouteDecision,
-    ) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
+    ) -> tuple[
+        str,
+        list[dict[str, Any]],
+        list[dict[str, Any]],
+        list[str],
+        dict[str, Any],
+    ]:
         if decision.route is RouteType.SIMPLE:
             response = self.simple_chat.respond(context.normalized_input)
-            return response.message, [], [
-                {"type": "simple_chat", "category": response.category.value}
-            ]
+            return (
+                response.message,
+                [],
+                [{"type": "simple_chat", "category": response.category.value}],
+                [],
+                {},
+            )
         runtime = self.runtime_provider()
         outcome = runtime.run(context, decision)
         text, sources = self.renderer.render(outcome)
-        return text, sources, [
-            {
-                "type": "v2_runtime",
-                "status": outcome.status.value,
-                "coordination_mode": getattr(
-                    runtime,
-                    "coordination_mode",
-                    "fixed",
-                ),
-            },
-            *outcome.blackboard.trace_events(),
-        ]
+        final_metadata = outcome.final_artifact.metadata
+        streamed_tokens = (
+            [str(token) for token in final_metadata.get("streamed_tokens", ())]
+            if final_metadata.get("llm_used") is True
+            else []
+        )
+        token_usage = (
+            thaw_value(final_metadata.get("token_usage") or {})
+            if final_metadata.get("llm_used") is True
+            else {}
+        )
+        return (
+            text,
+            sources,
+            [
+                {
+                    "type": "v2_runtime",
+                    "status": outcome.status.value,
+                    "coordination_mode": getattr(
+                        runtime,
+                        "coordination_mode",
+                        "fixed",
+                    ),
+                },
+                *outcome.blackboard.trace_events(),
+            ],
+            streamed_tokens,
+            token_usage,
+        )
 
 def build_multi_expert_runtime(
     settings: Settings,
     session_factory: sessionmaker[Session],
     *,
     coordination_mode: Literal["fixed", "collaborative"] | None = None,
+    chat_model_provider: ChatModelProvider | None = None,
 ) -> RecipeAgentRuntime:
     retrieval_overrides: dict[str, Any] = {}
     if not settings.neo4j_enabled:
@@ -513,7 +626,24 @@ def build_multi_expert_runtime(
         raise ValueError(
             "coordination_mode must be 'fixed' or 'collaborative'"
         ) from exc
-    return RecipeAgentRuntime(coordinator_type(ExpertRegistry([dispatcher])))
+    expert_registry = ExpertRegistry([dispatcher])
+    if coordinator_type is CollaborativeRecipeCoordinator:
+        response_agent = (
+            LLMResponseAgent(
+                chat_model_provider,
+                model_name=settings.chat_model,
+                max_output_chars=settings.chat_response_max_chars,
+            )
+            if chat_model_provider is not None
+            else None
+        )
+        coordinator = CollaborativeRecipeCoordinator(
+            expert_registry,
+            response_agent=response_agent,
+        )
+    else:
+        coordinator = RecipeCoordinator(expert_registry)
+    return RecipeAgentRuntime(coordinator)
 
 
 def build_runtime_harness(
@@ -522,16 +652,38 @@ def build_runtime_harness(
     *,
     runtime_provider: RuntimeProvider | None = None,
     coordination_mode: Literal["fixed", "collaborative"] | None = None,
+    chat_model_provider: ChatModelProvider | None = None,
 ) -> MultiExpertHarness:
     provider = runtime_provider or LazyRuntimeProvider(
         lambda: build_multi_expert_runtime(
             settings,
             session_factory,
             coordination_mode=coordination_mode,
+            chat_model_provider=chat_model_provider,
         )
+    )
+    router = (
+        BusinessRouter(
+            classifier=LLMRouteClassifier(
+                chat_model_provider,
+                model_name=settings.chat_model,
+            )
+        )
+        if chat_model_provider is not None
+        else BusinessRouter()
     )
     return MultiExpertHarness(
         runtime_provider=provider,
+        router=router,
+        context_resolver=(
+            LLMConversationContextAgent(
+                chat_model_provider,
+                model_name=settings.chat_model,
+                min_confidence=settings.chat_context_min_confidence,
+            )
+            if chat_model_provider is not None
+            else None
+        ),
     )
 
 

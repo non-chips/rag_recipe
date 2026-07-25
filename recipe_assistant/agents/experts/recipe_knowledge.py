@@ -108,7 +108,7 @@ class RecipeKnowledgeExpert(BaseExpert):
         board: CollaborationBlackboard,
     ) -> AgentArtifact:
         constraints = KnowledgeConstraints(
-            query=board.user_input,
+            query=board.retrieval_query,
             topics=self._classify_topics(board.user_input),
         )
         return self._artifact(task, board, ArtifactKind.QUERY_CONSTRAINTS, constraints, 1.0)

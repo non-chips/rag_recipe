@@ -182,7 +182,7 @@ class RecipeRecommendationExpert(BaseExpert):
             role=ToolRole.RECOMMENDATION_EXPERT,
             tool_name="recommend_recipes",
             arguments={
-                "query": board.user_input,
+                "query": board.retrieval_query,
                 "constraints": self._constraint_labels(constraints),
                 "top_k": 20,
             },

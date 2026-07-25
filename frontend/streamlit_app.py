@@ -10,6 +10,8 @@ from uuid import uuid4
 import requests
 import streamlit as st
 
+from frontend.chat_state import merge_server_messages
+
 
 API_BASE_URL = os.getenv("FRONTEND_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 USER_ID = int(os.getenv("FRONTEND_USER_ID", "1"))
@@ -77,6 +79,16 @@ def load_feedback(message_id: int) -> dict | None:
     return response.json()
 
 
+def load_session_messages(session_id: str) -> list[dict]:
+    response = requests.get(
+        f"{API_BASE_URL}/api/sessions/{session_id}/messages",
+        headers={"X-User-Id": str(USER_ID)},
+        timeout=10,
+    )
+    response.raise_for_status()
+    return list(response.json())
+
+
 def submit_feedback(
     item: dict,
     rating: str,
@@ -99,7 +111,7 @@ def submit_feedback(
     return response.json()
 
 
-def render_feedback(item: dict) -> None:
+def render_feedback(item: dict, *, disabled: bool = False) -> None:
     message_id = item.get("message_id")
     if not message_id or not item.get("run_id"):
         return
@@ -116,21 +128,22 @@ def render_feedback(item: dict) -> None:
             "👍 有帮助",
             key=f"feedback-like-{message_id}",
             type="primary" if current and current["rating"] == "LIKE" else "secondary",
+            disabled=disabled,
         ):
             item["feedback"] = submit_feedback(item, "LIKE")
-            st.rerun()
         if right.button(
             "👎 没帮助",
             key=f"feedback-dislike-{message_id}",
             type=(
                 "primary" if current and current["rating"] == "DISLIKE" else "secondary"
             ),
+            disabled=disabled,
         ):
             item["feedback"] = submit_feedback(item, "DISLIKE")
-            st.rerun()
     except requests.RequestException as exc:
         st.error(f"反馈提交失败：{exc}")
 
+    current = item.get("feedback")
     if current:
         label = "有帮助" if current["rating"] == "LIKE" else "没帮助"
         st.caption(f"已记录：{label}")
@@ -151,7 +164,7 @@ def render_feedback(item: dict) -> None:
             )
             existing_comment = current.get("comment") or "" if current else ""
             comment = st.text_area("评论", value=existing_comment, max_chars=1000)
-            save = st.form_submit_button("保存反馈")
+            save = st.form_submit_button("保存反馈", disabled=disabled)
         if save:
             try:
                 item["feedback"] = submit_feedback(
@@ -160,7 +173,6 @@ def render_feedback(item: dict) -> None:
                     [REASON_TAGS[label] for label in selected],
                     comment,
                 )
-                st.rerun()
             except requests.RequestException as exc:
                 st.error(f"反馈提交失败：{exc}")
 
@@ -175,14 +187,34 @@ if "session_id" not in st.session_state:
     st.session_state["session_id"] = None
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
+if "chat_busy" not in st.session_state:
+    st.session_state["chat_busy"] = False
+
+if st.session_state.get("session_id"):
+    try:
+        persisted_messages = load_session_messages(st.session_state["session_id"])
+        st.session_state["messages"] = merge_server_messages(
+            st.session_state["messages"],
+            persisted_messages,
+        )
+    except requests.RequestException:
+        # Keep the local snapshot usable when history recovery is temporarily
+        # unavailable; the next rerun will retry.
+        pass
+
+prompt = st.chat_input(
+    "请输入菜谱问题，或让我根据天气推荐菜谱",
+    disabled=st.session_state["chat_busy"],
+)
+if prompt:
+    st.session_state["chat_busy"] = True
 
 for item in st.session_state["messages"]:
     with st.chat_message(item["role"]):
         st.write(item["content"])
         if item["role"] == "assistant":
-            render_feedback(item)
+            render_feedback(item, disabled=st.session_state["chat_busy"])
 
-prompt = st.chat_input("请输入菜谱问题，或让我根据天气推荐菜谱")
 if prompt:
     st.session_state.pop("response_run_id", None)
     st.session_state.pop("response_message_id", None)
@@ -197,6 +229,8 @@ if prompt:
         except requests.RequestException as exc:
             answer = f"无法连接后端 API：{exc}"
             st.error(answer)
+        finally:
+            st.session_state["chat_busy"] = False
     st.session_state["messages"].append(
         {
             "role": "assistant",
@@ -205,3 +239,7 @@ if prompt:
             "message_id": st.session_state.get("response_message_id"),
         }
     )
+    if st.session_state.get("response_message_id"):
+        # The answer is now in local state and persisted by the backend. A
+        # completion rerun is safe and re-enables feedback controls.
+        st.rerun()

@@ -50,6 +50,7 @@ class CollaborationBlackboard:
     session_id: str
     user_input: str
     route: RouteDecision
+    retrieval_query: str = ""
     tasks: Mapping[str, AgentTask] = field(default_factory=dict)
     artifacts: tuple[AgentArtifact, ...] = ()
     events: tuple[AgentEvent, ...] = ()
@@ -58,6 +59,8 @@ class CollaborationBlackboard:
     def __post_init__(self) -> None:
         if not self.run_id or not self.session_id:
             raise ValueError("blackboard run_id and session_id must be non-empty")
+        if not self.retrieval_query:
+            object.__setattr__(self, "retrieval_query", self.user_input)
         object.__setattr__(self, "tasks", MappingProxyType(dict(self.tasks)))
         object.__setattr__(self, "artifacts", tuple(self.artifacts))
         object.__setattr__(self, "events", tuple(self.events))
