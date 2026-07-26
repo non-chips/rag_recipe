@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from fakes.chat_model import FakeChatModel
 
@@ -20,9 +21,20 @@ from recipe_assistant.agents.registry import ExpertRegistry
 from recipe_assistant.agents.result import MemoryMessage, ProfileSnapshot, RunContext
 from recipe_assistant.agents.router import BusinessRouter
 from recipe_assistant.agents.runtime import RecipeAgentRuntime
+from recipe_assistant.agents.skills import SkillContextAgent
 from recipe_assistant.core.database import utc_now
 from recipe_assistant.models import MessageRole
 from recipe_assistant.schemas.agent.route import RouteDecision, RouteType
+from recipe_assistant.services.skills import SkillRegistry
+
+
+_SKILL_AGENT = SkillContextAgent(
+    SkillRegistry.load(Path(__file__).resolve().parents[2] / "skills")
+)
+
+
+def _expert_registry(expert) -> ExpertRegistry:
+    return ExpertRegistry([expert, _SKILL_AGENT])
 
 
 def _decision() -> RouteDecision:
@@ -163,7 +175,7 @@ def test_llm_response_is_guarded_accepted_traced_and_streamed() -> None:
         )
     )
     coordinator = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_NutritionExpert()]),
+        _expert_registry(_NutritionExpert()),
         response_agent=LLMResponseAgent(
             lambda: model,
             model_name="fake-response",
@@ -218,7 +230,7 @@ def test_response_model_failure_uses_deterministic_proposal() -> None:
         raise ConnectionError("offline")
 
     coordinator = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_NutritionExpert()]),
+        _expert_registry(_NutritionExpert()),
         response_agent=LLMResponseAgent(
             unavailable,
             model_name="offline",
@@ -238,7 +250,7 @@ def test_response_model_failure_uses_deterministic_proposal() -> None:
 
 
 def test_chat_disabled_path_uses_non_llm_response_agent() -> None:
-    coordinator = CollaborativeRecipeCoordinator(ExpertRegistry([_NutritionExpert()]))
+    coordinator = CollaborativeRecipeCoordinator(_expert_registry(_NutritionExpert()))
 
     outcome = coordinator.coordinate(_board())
 
@@ -250,7 +262,7 @@ def test_chat_disabled_path_uses_non_llm_response_agent() -> None:
 def test_guardrail_rejects_unsafe_llm_output_and_exhausts_revision() -> None:
     model = FakeChatModel(response_text="Raw chicken is safe without cooking.")
     coordinator = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_NutritionExpert()]),
+        _expert_registry(_NutritionExpert()),
         response_agent=LLMResponseAgent(
             lambda: model,
             model_name="unsafe-fake",

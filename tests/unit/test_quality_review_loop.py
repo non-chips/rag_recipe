@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 
 from recipe_assistant.agents.blackboard import CollaborationBlackboard
 from recipe_assistant.agents.coordinator import (
@@ -20,7 +21,14 @@ from recipe_assistant.agents.events import (
 )
 from recipe_assistant.agents.quality import GuardrailAgent, ResponseAgent
 from recipe_assistant.agents.registry import ExpertRegistry
+from recipe_assistant.agents.skills import SkillContextAgent
 from recipe_assistant.schemas.agent.route import RouteDecision, RouteType
+from recipe_assistant.services.skills import SkillRegistry
+
+
+_SKILL_AGENT = SkillContextAgent(
+    SkillRegistry.load(Path(__file__).resolve().parents[2] / "skills")
+)
 
 
 def _board() -> CollaborationBlackboard:
@@ -286,7 +294,7 @@ class _RecommendationExpert:
 
 def test_rejected_proposal_is_revised_once_then_accepted() -> None:
     outcome = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_RecommendationExpert()])
+        ExpertRegistry([_RecommendationExpert(), _SKILL_AGENT])
     ).coordinate(_board())
 
     assert outcome.status is CoordinationStatus.SUCCEEDED
@@ -326,7 +334,7 @@ class _StubbornResponseAgent(ResponseAgent):
 
 def test_revision_exhaustion_degrades_and_queues_bad_case_candidate() -> None:
     outcome = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_RecommendationExpert()]),
+        ExpertRegistry([_RecommendationExpert(), _SKILL_AGENT]),
         limits=CoordinatorLimits(max_revisions=1),
         response_agent=_StubbornResponseAgent(),
     ).coordinate(_board())

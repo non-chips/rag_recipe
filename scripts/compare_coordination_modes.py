@@ -33,7 +33,12 @@ from recipe_assistant.agents.events import (  # noqa: E402
     thaw_value,
 )
 from recipe_assistant.agents.registry import ExpertRegistry  # noqa: E402
+from recipe_assistant.agents.skills import SkillContextAgent  # noqa: E402
 from recipe_assistant.schemas.agent.route import RouteDecision, RouteType  # noqa: E402
+from recipe_assistant.services.skills import SkillRegistry  # noqa: E402
+
+
+_SKILL_AGENT = SkillContextAgent(SkillRegistry.load(PROJECT_ROOT / "skills"))
 
 
 @dataclass(frozen=True, slots=True)
@@ -306,7 +311,9 @@ class CoordinationModeEvaluator:
         coordinator = (
             RecipeCoordinator(ExpertRegistry([expert]))
             if mode == "fixed"
-            else CollaborativeRecipeCoordinator(ExpertRegistry([expert]))
+            else CollaborativeRecipeCoordinator(
+                ExpertRegistry([expert, _SKILL_AGENT])
+            )
         )
         board = CollaborationBlackboard(
             run_id=f"cutover-{mode}-{case.case_id}",

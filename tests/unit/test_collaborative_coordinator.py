@@ -65,6 +65,15 @@ class _ClaimingExpert:
                 "rejected": (),
                 "hard_constraints_applied": (),
             }
+        elif kind is ArtifactKind.SKILL_CONTEXT:
+            payload = {
+                "selected_skill_refs": (),
+                "signals": (),
+                "risk": "LOW",
+                "prompt_context": "# Active behavioral Skills\n- none",
+                "selection_reason": "no trusted signals",
+                "hard_constraints_authoritative": True,
+            }
         elif kind is ArtifactKind.RESPONSE_PLAN:
             payload = {"message": "safe structured response plan"}
         return AgentArtifact(

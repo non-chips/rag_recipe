@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from time import perf_counter, sleep
 
 from recipe_assistant.agents.blackboard import CollaborationBlackboard
@@ -18,7 +19,18 @@ from recipe_assistant.agents.events import (
     thaw_value,
 )
 from recipe_assistant.agents.registry import ExpertRegistry
+from recipe_assistant.agents.skills import SkillContextAgent
 from recipe_assistant.schemas.agent.route import RouteDecision, RouteType
+from recipe_assistant.services.skills import SkillRegistry
+
+
+_SKILL_AGENT = SkillContextAgent(
+    SkillRegistry.load(Path(__file__).resolve().parents[2] / "skills")
+)
+
+
+def _expert_registry(expert) -> ExpertRegistry:
+    return ExpertRegistry([expert, _SKILL_AGENT])
 
 
 _CANDIDATE = {
@@ -141,11 +153,11 @@ def _normalized_artifacts(outcome) -> list[tuple]:
 
 def test_single_writer_order_and_outputs_are_repeatable() -> None:
     first = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_TimedRecommendationExpert()]),
+        _expert_registry(_TimedRecommendationExpert()),
         limits=CoordinatorLimits(max_claims_per_round=4),
     ).coordinate(_board())
     second = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_TimedRecommendationExpert()]),
+        _expert_registry(_TimedRecommendationExpert()),
         limits=CoordinatorLimits(max_claims_per_round=4),
     ).coordinate(_board())
 
@@ -178,7 +190,7 @@ def test_independent_io_remains_at_serial_baseline_without_parallel_overhead() -
     }
     started = perf_counter()
     outcome = CollaborativeRecipeCoordinator(
-        ExpertRegistry([_TimedRecommendationExpert(delays=delays)])
+        _expert_registry(_TimedRecommendationExpert(delays=delays))
     ).coordinate(_board())
     elapsed = perf_counter() - started
 
@@ -190,12 +202,10 @@ def test_independent_io_remains_at_serial_baseline_without_parallel_overhead() -
 
 def test_io_deadline_produces_deterministic_weather_fallback() -> None:
     outcome = CollaborativeRecipeCoordinator(
-        ExpertRegistry(
-            [
-                _TimedRecommendationExpert(
-                    delays={"recommendation.weather": 0.01}
-                )
-            ]
+        _expert_registry(
+            _TimedRecommendationExpert(
+                delays={"recommendation.weather": 0.01}
+            )
         ),
         limits=CoordinatorLimits(io_timeout_seconds=0.001),
     ).coordinate(_board())

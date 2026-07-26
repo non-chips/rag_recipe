@@ -56,6 +56,7 @@ from recipe_assistant.agents.result import (
 )
 from recipe_assistant.agents.router import BusinessRouter
 from recipe_assistant.agents.runtime import RecipeAgentRuntime
+from recipe_assistant.agents.skills import SkillContextAgent
 from recipe_assistant.core.config import PROJECT_ROOT, Settings
 from recipe_assistant.core.database import session_scope
 from recipe_assistant.repositories.sqlite import (
@@ -75,6 +76,7 @@ from recipe_assistant.services.profile import ProfileService
 from recipe_assistant.services.recommendation import RecommendationService
 from recipe_assistant.services.retrieval import RetrievalService
 from recipe_assistant.services.simple_chat import SimpleChatService
+from recipe_assistant.services.skills import SkillRegistry, SkillValidationError
 from recipe_assistant.services.weather import WeatherService
 from recipe_assistant.tools.nutrition_tools import create_nutrition_tools
 from recipe_assistant.tools.recipe_knowledge_tools import create_recipe_knowledge_tool
@@ -85,6 +87,26 @@ from recipe_assistant.tools.schemas import CalculateNutritionInput, MealHistoryI
 
 class RuntimeProvider(Protocol):
     def __call__(self) -> RecipeAgentRuntime: ...
+
+
+class SkillRuntimeConfigurationError(RuntimeError):
+    """Raised when business Skills cannot be validated during assembly."""
+
+
+def _load_business_skill_registry(
+    skill_directory: str | Path | None = None,
+) -> SkillRegistry:
+    root = (
+        Path(skill_directory).resolve()
+        if skill_directory is not None
+        else (Path(PROJECT_ROOT) / "skills").resolve()
+    )
+    try:
+        return SkillRegistry.load(root)
+    except (OSError, SkillValidationError, ValueError) as exc:
+        raise SkillRuntimeConfigurationError(
+            f"failed to load business Skills from {root}: {exc}"
+        ) from exc
 
 
 class LazyRuntimeProvider:
@@ -532,7 +554,32 @@ def build_multi_expert_runtime(
     *,
     coordination_mode: Literal["fixed", "collaborative"] | None = None,
     chat_model_provider: ChatModelProvider | None = None,
+    skill_registry: SkillRegistry | None = None,
+    skill_directory: str | Path | None = None,
 ) -> RecipeAgentRuntime:
+    resolved_coordination_mode = (
+        coordination_mode or settings.agent_coordination_mode
+    )
+    coordinator_types = {
+        "fixed": RecipeCoordinator,
+        "collaborative": CollaborativeRecipeCoordinator,
+    }
+    try:
+        coordinator_type = coordinator_types[resolved_coordination_mode]
+    except KeyError as exc:
+        raise ValueError(
+            "coordination_mode must be 'fixed' or 'collaborative'"
+        ) from exc
+    resolved_skill_registry = (
+        skill_registry
+        if skill_registry is not None
+        else (
+            _load_business_skill_registry(skill_directory)
+            if coordinator_type is CollaborativeRecipeCoordinator
+            else None
+        )
+    )
+
     retrieval_overrides: dict[str, Any] = {}
     if not settings.neo4j_enabled:
         retrieval_overrides["graph_retriever"] = None
@@ -613,21 +660,11 @@ def build_multi_expert_runtime(
         preference_provider,
         weather_service,
     )
-    resolved_coordination_mode = (
-        coordination_mode or settings.agent_coordination_mode
-    )
-    coordinator_types = {
-        "fixed": RecipeCoordinator,
-        "collaborative": CollaborativeRecipeCoordinator,
-    }
-    try:
-        coordinator_type = coordinator_types[resolved_coordination_mode]
-    except KeyError as exc:
-        raise ValueError(
-            "coordination_mode must be 'fixed' or 'collaborative'"
-        ) from exc
     expert_registry = ExpertRegistry([dispatcher])
     if coordinator_type is CollaborativeRecipeCoordinator:
+        if resolved_skill_registry is None:
+            raise AssertionError("collaborative runtime requires a Skill Registry")
+        expert_registry.register(SkillContextAgent(resolved_skill_registry))
         response_agent = (
             LLMResponseAgent(
                 chat_model_provider,
@@ -653,15 +690,33 @@ def build_runtime_harness(
     runtime_provider: RuntimeProvider | None = None,
     coordination_mode: Literal["fixed", "collaborative"] | None = None,
     chat_model_provider: ChatModelProvider | None = None,
+    skill_registry: SkillRegistry | None = None,
+    skill_directory: str | Path | None = None,
 ) -> MultiExpertHarness:
-    provider = runtime_provider or LazyRuntimeProvider(
-        lambda: build_multi_expert_runtime(
-            settings,
-            session_factory,
-            coordination_mode=coordination_mode,
-            chat_model_provider=chat_model_provider,
+    provider = runtime_provider
+    if provider is None:
+        resolved_coordination_mode = (
+            coordination_mode or settings.agent_coordination_mode
         )
-    )
+        resolved_skill_registry = (
+            skill_registry
+            if skill_registry is not None
+            else (
+                _load_business_skill_registry(skill_directory)
+                if resolved_coordination_mode == "collaborative"
+                else None
+            )
+        )
+        provider = LazyRuntimeProvider(
+            lambda: build_multi_expert_runtime(
+                settings,
+                session_factory,
+                coordination_mode=coordination_mode,
+                chat_model_provider=chat_model_provider,
+                skill_registry=resolved_skill_registry,
+                skill_directory=skill_directory,
+            )
+        )
     router = (
         BusinessRouter(
             classifier=LLMRouteClassifier(

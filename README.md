@@ -58,12 +58,38 @@ development、test 和 production 均只允许 V2。V2 执行失败时返回明�
 助手历史污染，也不能覆盖本轮检索证据、硬约束和食品安全审核。新会话不会
 继承其他会话的短期上下文。
 
+## 业务 Skill Runtime
+
+协作式协调器会在领域 `RESPONSE_PLAN` 完成后运行确定性的
+`context.skills` 任务，再生成 Response Proposal。当前业务 Skill 位于
+`skills/*/SKILL.md`：
+
+- `allergy_safe_recommendation`：过敏原与排除食材安全推荐；
+- `ingredient_substitution`：食材替代建议；
+- `source_aware_nutrition_report`：带数据来源边界的营养报告；
+- `weather_aware_recommendation`：基于已验证天气 Artifact 的推荐。
+
+业务运行时只读取上述目录结构，不读取仓库根目录的 `skills-lock.json`；
+后者属于 Codex 工程能力依赖，不是食谱助手业务配置。Skill 不得覆盖用户
+硬约束、候选校验结果或天气/营养等业务事实。
+
+完整的数据流、启动失败策略、优先级、扩展步骤、迁移范围和 Trace 脱敏规则
+见 `docs/skill_runtime/ARCHITECTURE.md`。
+
 ## 测试
 
 ```powershell
 python -m pytest -q
 python -m ruff check .
-python -m compileall recipe_assistant frontend
+python -m compileall recipe_assistant rag graph frontend
+```
+
+Windows 完整冒烟：
+
+```powershell
+$env:PROJECT_PYTHON = "D:\Anaconda\envs\rag\python.exe"  # 按本机路径调整
+powershell.exe -ExecutionPolicy Bypass -File scripts\smoke_windows.ps1
+powershell.exe -ExecutionPolicy Bypass -File scripts\final_smoke_test.ps1
 ```
 
 ## 快速查看 Trace 与 Bad Case

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from enum import Enum
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -111,6 +114,71 @@ class SkillSelection(SkillSchema):
     selected_skill_refs: tuple[str, ...]
     prompt_context: str
     hard_constraints_remain_authoritative: bool = True
+
+
+class SkillContextPayload(SkillSchema):
+    """Validated, canonical payload for one deterministic Skill selection."""
+
+    selected_skill_refs: list[str] = Field(default_factory=list)
+    signals: list[SkillSignal] = Field(default_factory=list)
+    risk: SkillRisk = SkillRisk.LOW
+    prompt_context: str = Field(min_length=1)
+    selection_reason: str = Field(min_length=1, max_length=1000)
+    hard_constraints_authoritative: Literal[True] = True
+
+    @field_validator("selected_skill_refs", mode="before")
+    @classmethod
+    def normalize_skill_refs(cls, value: tuple[str, ...] | list[str]) -> list[str]:
+        references = {str(reference).strip() for reference in value}
+        for reference in references:
+            try:
+                name, version = reference.rsplit("@", 1)
+            except ValueError as exc:
+                raise ValueError(
+                    "Skill references must use name@version"
+                ) from exc
+            if not _NAME_PATTERN.fullmatch(name) or not _VERSION_PATTERN.fullmatch(
+                version
+            ):
+                raise ValueError(
+                    f"invalid Skill reference: {reference}; expected name@version"
+                )
+        return sorted(references)
+
+    @field_validator("signals", mode="before")
+    @classmethod
+    def normalize_signals(
+        cls,
+        value: tuple[SkillSignal | str, ...] | list[SkillSignal | str],
+    ) -> list[SkillSignal]:
+        signals = {SkillSignal(signal) for signal in value}
+        return sorted(signals, key=lambda signal: signal.value)
+
+    def audit_projection(self) -> dict[str, object]:
+        """Return a stable audit record without exposing the Skill prompt."""
+
+        canonical = json.dumps(
+            self.model_dump(mode="json"),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return {
+            "selected_skill_refs": list(self.selected_skill_refs),
+            "signals": [signal.value for signal in self.signals],
+            "risk": self.risk.value,
+            "hard_constraints_authoritative": (
+                self.hard_constraints_authoritative
+            ),
+            "skill_context_hash": hashlib.sha256(
+                canonical.encode("utf-8")
+            ).hexdigest(),
+            "selection_reason_code": (
+                "REGISTRY_MATCH"
+                if self.selected_skill_refs
+                else "NO_SKILL_SELECTED"
+            ),
+        }
 
 
 class SkillRegistry:

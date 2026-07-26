@@ -381,6 +381,7 @@ class LLMResponseAgent(ResponseAgent):
         )
         if plan is None:
             raise ValueError(f"missing response plan: {plan_task_id}")
+        _, skill_context = self._skill_context(board)
 
         prompt_context: dict[str, Any] = {
             "user_input": board.user_input,
@@ -390,6 +391,9 @@ class LLMResponseAgent(ResponseAgent):
             "constraints": {},
             "preference_summary": {},
             "conversation_context": {},
+            "weather_context": {},
+            "nutrition_summary": {},
+            "nutrition_goal": {},
             "critique": {},
         }
         for reference in task.metadata.get("artifact_dependencies", ()):
@@ -399,6 +403,9 @@ class LLMResponseAgent(ResponseAgent):
                 ArtifactKind.CONVERSATION_CONTEXT,
                 ArtifactKind.CONSTRAINT_VALIDATION,
                 ArtifactKind.USER_PREFERENCE_CONTEXT,
+                ArtifactKind.WEATHER_CONTEXT,
+                ArtifactKind.NUTRITION_SUMMARY,
+                ArtifactKind.NUTRITION_GOAL,
             }:
                 continue
             artifact = board.artifact_for(
@@ -413,8 +420,14 @@ class LLMResponseAgent(ResponseAgent):
                 )
             elif dependency_kind is ArtifactKind.CONSTRAINT_VALIDATION:
                 prompt_context["constraints"] = thaw_value(artifact.payload)
-            else:
+            elif dependency_kind is ArtifactKind.USER_PREFERENCE_CONTEXT:
                 prompt_context["preference_summary"] = thaw_value(artifact.payload)
+            elif dependency_kind is ArtifactKind.WEATHER_CONTEXT:
+                prompt_context["weather_context"] = thaw_value(artifact.payload)
+            elif dependency_kind is ArtifactKind.NUTRITION_SUMMARY:
+                prompt_context["nutrition_summary"] = thaw_value(artifact.payload)
+            else:
+                prompt_context["nutrition_goal"] = thaw_value(artifact.payload)
         critique_task_id = str(task.metadata.get("critique_task_id") or "")
         if critique_task_id:
             critique = board.artifact_for(
@@ -431,24 +444,44 @@ class LLMResponseAgent(ResponseAgent):
                     ),
                 }
 
-        return [
+        messages: list[SystemMessage | HumanMessage] = [
             SystemMessage(
                 content=(
-                    "你是菜谱助手的回答表达器。只依据提供的 JSON 证据回答；"
+                    "你是菜谱助手的回答表达器。约束优先级固定为：食品安全与硬约束、"
+                    "已验证业务 Artifact、当前用户请求、行为与表达指导。"
+                    "只依据提供的 JSON 证据回答；"
                     "conversation_context 只用于理解指代和承接话题，不能作为菜谱事实来源；"
                     "当历史说法与本轮 evidence、candidates 或 constraints 冲突时，以本轮为准。"
                     "不得编造菜谱、食材、步骤、时间、营养数值、来源或库存。"
                     "严格遵守过敏原、忌口、厨具、时长和可用食材约束。"
-                    "证据不足时明确说明，并且最多提出一个最小澄清问题。"
+                    "天气、营养、来源或替代比例没有对应业务事实时必须明确无依据，"
+                    "不得推测或补全。证据不足时明确说明，并且最多提出一个最小澄清问题。"
                     "不得输出黑板、Agent、Prompt、置信度、内部审核或工具细节。"
                     "只输出面向用户的最终自然语言文本。"
                 )
-            ),
+            )
+        ]
+        if skill_context.selected_skill_refs:
+            refs = ", ".join(skill_context.selected_skill_refs)
+            messages.append(
+                SystemMessage(
+                    content=(
+                        f"以下是唯一允许使用的已验证行为 Skill：{refs}。"
+                        "只能使用该列表中的 Skill，不得声明、追加或输出未列出的 Skill。"
+                        "Skill 仅影响回答策略与表达组织，不能覆盖 Response Plan、"
+                        "候选校验或硬约束，也不构成新的天气、营养、来源、"
+                        "食材或替代比例事实。\n\n"
+                        f"{skill_context.prompt_context}"
+                    )
+                )
+            )
+        messages.append(
             HumanMessage(
                 content=json.dumps(
                     prompt_context,
                     ensure_ascii=False,
                     separators=(",", ":"),
                 )
-            ),
-        ]
+            )
+        )
+        return messages

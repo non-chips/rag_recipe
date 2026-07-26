@@ -6,6 +6,8 @@ import re
 from collections.abc import Mapping
 from typing import Any, ClassVar
 
+from pydantic import ValidationError
+
 from recipe_assistant.agents.blackboard import CollaborationBlackboard
 from recipe_assistant.agents.events import (
     AgentArtifact,
@@ -13,6 +15,7 @@ from recipe_assistant.agents.events import (
     ArtifactKind,
     ClaimDecision,
     ExpertCapability,
+    TaskStatus,
     thaw_value,
 )
 from recipe_assistant.services.constraint import (
@@ -21,6 +24,7 @@ from recipe_assistant.services.constraint import (
     RecipeCandidate,
     TemporaryConstraints,
 )
+from recipe_assistant.services.skills import SkillContextPayload
 
 
 class ResponseAgent:
@@ -63,6 +67,7 @@ class ResponseAgent:
             raise ValueError(
                 f"required artifact is missing: {plan_task_id}/RESPONSE_PLAN"
             )
+        skill_artifact, skill_context = self._skill_context(board)
 
         prior_proposal_id = str(task.metadata.get("prior_proposal_id") or "")
         critique_task_id = str(task.metadata.get("critique_task_id") or "")
@@ -102,7 +107,7 @@ class ResponseAgent:
                 or "已依据当前结构化业务方案生成回答。"
             )
 
-        references = [plan.id]
+        references = [plan.id, skill_artifact.id]
         for reference in task.metadata.get("artifact_dependencies", ()):
             dependency_task_id = str(reference["task_id"])
             dependency_kind = ArtifactKind(str(reference["kind"]))
@@ -132,9 +137,26 @@ class ResponseAgent:
             payload=payload,
             confidence=plan.confidence if not rejected_ids else 0.5,
             task_id=task.id,
-            metadata={"declared_dependencies_only": True},
+            metadata={
+                "declared_dependencies_only": True,
+                "selected_skill_refs": list(skill_context.selected_skill_refs),
+            },
             revision_of=prior_proposal_id,
         )
+
+    @staticmethod
+    def _skill_context(
+        board: CollaborationBlackboard,
+    ) -> tuple[AgentArtifact, SkillContextPayload]:
+        artifact = board.artifact_for(
+            task_id="context.skills",
+            kind=ArtifactKind.SKILL_CONTEXT,
+        )
+        if artifact is None:
+            raise ValueError(
+                "required artifact is missing: context.skills/SKILL_CONTEXT"
+            )
+        return artifact, SkillContextPayload.model_validate(artifact.payload)
 
 
 class GuardrailAgent:
@@ -164,6 +186,24 @@ class GuardrailAgent:
     _UNVERIFIED_ACTION_PATTERN = re.compile(
         r"(?:已|已经)(?:为(?:您|你)|帮(?:您|你)).{0,6}(?:记录|保存|添加)"
         r"|(?:记录|保存|添加)(?:完成|成功|好了)"
+    )
+    _SKILL_REF_PATTERN = re.compile(
+        r"^[a-z][a-z0-9_]{2,63}@"
+        r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
+        r"(?:-[0-9A-Za-z.-]+)?$"
+    )
+    _EXACT_WEATHER_PATTERN = re.compile(
+        r"(?:当前|现在|实时|今日|今天).{0,12}"
+        r"-?\d{1,2}(?:\.\d+)?\s*(?:°C|℃|度)"
+    )
+    _EXACT_NUTRITION_PATTERN = re.compile(
+        r"(?:热量|蛋白质|脂肪|碳水|钠).{0,8}"
+        r"\d+(?:\.\d+)?\s*(?:kcal|千卡|卡路里|mg|毫克|克|g)\b"
+        r"|\d+(?:\.\d+)?\s*(?:kcal|千卡|卡路里)\b",
+        re.IGNORECASE,
+    )
+    _EXACT_SUBSTITUTION_PATTERN = re.compile(
+        r"(?:替代|替换).{0,16}(?:\d+\s*[:：]\s*\d+|按\s*\d+\s*比\s*\d+)"
     )
 
     def __init__(self) -> None:
@@ -202,6 +242,77 @@ class GuardrailAgent:
                 f"required artifact is missing: {proposal_task_id}/RESPONSE_PROPOSAL"
             )
 
+        violations: list[str] = []
+        rejected_ids: set[str] = set()
+        skill_task_id = str(task.metadata.get("skill_task_id") or "context.skills")
+        skill_artifact = board.artifact_for(
+            task_id=skill_task_id,
+            kind=ArtifactKind.SKILL_CONTEXT,
+        )
+        skill_context: SkillContextPayload | None = None
+        if skill_artifact is None:
+            violations.append("skill_context_missing")
+        else:
+            raw_refs = tuple(
+                str(item)
+                for item in skill_artifact.payload.get(
+                    "selected_skill_refs",
+                    (),
+                )
+            )
+            if (
+                skill_artifact.payload.get("hard_constraints_authoritative")
+                is not True
+            ):
+                violations.append("skill_authority_invalid")
+            try:
+                skill_context = SkillContextPayload.model_validate(
+                    skill_artifact.payload
+                )
+            except ValidationError:
+                violations.append("skill_context_invalid")
+            if (
+                len(raw_refs) != len(set(raw_refs))
+                or any(
+                    self._SKILL_REF_PATTERN.fullmatch(reference) is None
+                    for reference in raw_refs
+                )
+                or (
+                    skill_context is not None
+                    and raw_refs
+                    != tuple(skill_context.selected_skill_refs)
+                )
+            ):
+                violations.append("skill_refs_invalid")
+
+            proposal_refs = tuple(
+                str(item)
+                for item in proposal.metadata.get(
+                    "selected_skill_refs",
+                    (),
+                )
+            )
+            expected_refs = (
+                tuple(skill_context.selected_skill_refs)
+                if skill_context is not None
+                else raw_refs
+            )
+            if (
+                len(proposal_refs) != len(set(proposal_refs))
+                or any(
+                    self._SKILL_REF_PATTERN.fullmatch(reference) is None
+                    for reference in proposal_refs
+                )
+            ):
+                violations.append("proposal_skill_refs_invalid")
+            if proposal_refs != expected_refs:
+                violations.append("skill_refs_mismatch")
+            if skill_artifact.id not in tuple(
+                str(item)
+                for item in proposal.payload.get("references", ())
+            ):
+                violations.append("skill_artifact_not_referenced")
+
         constraints = self._optional_model(
             board,
             task,
@@ -220,8 +331,32 @@ class GuardrailAgent:
             RecipeCandidate.model_validate(item)
             for item in proposal.payload.get("candidates", ())
         )
-        violations: list[str] = []
-        rejected_ids: set[str] = set()
+
+        proposal_task = board.tasks.get(proposal.task_id)
+        critique_task_id = (
+            str(proposal_task.metadata.get("critique_task_id") or "")
+            if proposal_task is not None
+            else ""
+        )
+        if critique_task_id:
+            prior_critique = board.artifact_for(
+                task_id=critique_task_id,
+                kind=ArtifactKind.CRITIQUE,
+            )
+            if prior_critique is not None:
+                prior_rejected = {
+                    str(item)
+                    for item in prior_critique.payload.get(
+                        "rejected_candidate_ids",
+                        (),
+                    )
+                }
+                restored = {
+                    candidate.recipe_id for candidate in candidates
+                } & prior_rejected
+                if restored:
+                    rejected_ids.update(restored)
+                    violations.append("skill_restored_rejected_candidate")
 
         if candidates:
             validation = self.constraint_service.validate(
@@ -290,6 +425,26 @@ class GuardrailAgent:
             rejected_ids.update(candidate.recipe_id for candidate in candidates)
 
         message = str(proposal.payload.get("message") or "")
+        if (
+            not self._has_succeeded_artifact(
+                board,
+                ArtifactKind.WEATHER_CONTEXT,
+            )
+            and self._EXACT_WEATHER_PATTERN.search(message)
+        ):
+            violations.append("unsupported_realtime_weather_claim")
+        if (
+            not self._has_succeeded_artifact(
+                board,
+                ArtifactKind.NUTRITION_SUMMARY,
+                ArtifactKind.NUTRITION_GOAL,
+            )
+            and self._EXACT_NUTRITION_PATTERN.search(message)
+        ):
+            violations.append("unsupported_exact_nutrition_claim")
+        if self._EXACT_SUBSTITUTION_PATTERN.search(message):
+            violations.append("unsupported_substitution_ratio")
+
         supported_recipe_names = {
             str(item.get("recipe_name") or "").strip()
             for item in evidence
@@ -342,6 +497,18 @@ class GuardrailAgent:
                 "food_safety",
                 "recipe_existence_consistency",
                 "action_receipt_required",
+                "skill_refs_match",
+                "skill_authority",
+                "skill_artifact_reference",
+                "no_rejected_candidate_restoration",
+                "structured_weather_basis",
+                "structured_nutrition_basis",
+                "structured_substitution_basis",
+            ),
+            "selected_skill_refs": (
+                tuple(skill_context.selected_skill_refs)
+                if skill_context is not None
+                else ()
             ),
         }
         return AgentArtifact(
@@ -369,3 +536,15 @@ class GuardrailAgent:
         if artifact is None:
             return None
         return schema.model_validate(artifact.payload)
+
+    @staticmethod
+    def _has_succeeded_artifact(
+        board: CollaborationBlackboard,
+        *kinds: ArtifactKind,
+    ) -> bool:
+        return any(
+            artifact.kind in kinds
+            and artifact.task_id in board.tasks
+            and board.tasks[artifact.task_id].status is TaskStatus.SUCCEEDED
+            for artifact in board.artifacts
+        )

@@ -20,6 +20,7 @@ from recipe_assistant.agents.events import (
 from recipe_assistant.agents.quality import GuardrailAgent, ResponseAgent
 from recipe_assistant.agents.registry import ExpertCandidate, ExpertRegistry
 from recipe_assistant.schemas.agent.route import RouteDecision, RouteType
+from recipe_assistant.services.skills import SkillContextPayload
 
 
 class CoordinationStatus(str, Enum):
@@ -29,8 +30,8 @@ class CoordinationStatus(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class CoordinatorLimits:
-    max_steps: int = 12
-    max_budget: int = 12
+    max_steps: int = 14
+    max_budget: int = 14
     max_rounds: int = 24
     max_claims_per_round: int = 1
     max_claims_per_agent: int = 12
@@ -685,13 +686,20 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
                             f"expert artifact task mismatch: {artifact.task_id} != {task.id}"
                         )
                     board = board.add_artifact(artifact)
+                    artifact_metadata = {"kind": artifact.kind.value}
+                    if artifact.kind is ArtifactKind.SKILL_CONTEXT:
+                        artifact_metadata.update(
+                            SkillContextPayload.model_validate(
+                                artifact.payload
+                            ).audit_projection()
+                        )
                     board = board.append_event(
                         AgentEvent(
                             event_type=EventType.ARTIFACT_ADDED,
                             actor=expert.name,
                             task_id=task.id,
                             artifact_id=artifact.id,
-                            metadata={"kind": artifact.kind.value},
+                            metadata=artifact_metadata,
                         )
                     )
                     if artifact.metadata.get("purpose") in {
@@ -964,6 +972,31 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
         ):
             return board
 
+        skill_task_id = "context.skills"
+        if skill_task_id not in board.tasks:
+            return board.add_task(
+                AgentTask(
+                    id=skill_task_id,
+                    title="SelectSkillContext",
+                    capability=ExpertCapability.SKILL_SELECTION,
+                    status=TaskStatus.OPEN,
+                    priority=TaskPriority.HIGH,
+                    depends_on=(response_plan_task_id,),
+                    expected_artifacts=(ArtifactKind.SKILL_CONTEXT,),
+                )
+            )
+        skill_task = board.tasks[skill_task_id]
+        if skill_task.status is not TaskStatus.SUCCEEDED:
+            return board
+        if (
+            board.artifact_for(
+                task_id=skill_task_id,
+                kind=ArtifactKind.SKILL_CONTEXT,
+            )
+            is None
+        ):
+            return board
+
         proposal_task_id = "quality.proposal.0"
         if proposal_task_id not in board.tasks:
             board = board.add_task(
@@ -973,7 +1006,7 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
                     capability=ExpertCapability.RESPONSE_GENERATION,
                     status=TaskStatus.OPEN,
                     priority=TaskPriority.HIGH,
-                    depends_on=(response_plan_task_id,),
+                    depends_on=(response_plan_task_id, skill_task_id),
                     expected_artifacts=(ArtifactKind.RESPONSE_PROPOSAL,),
                     metadata={
                         "response_plan_task_id": response_plan_task_id,
@@ -1010,6 +1043,7 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
                         metadata={
                             "artifact_policy": "any",
                             "proposal_task_id": current_proposal_task_id,
+                            "skill_task_id": "context.skills",
                             **self._guardrail_dependency_ids(board),
                         },
                     )
@@ -1084,6 +1118,7 @@ class CollaborativeRecipeCoordinator(RecipeCoordinator):
     ) -> tuple[dict[str, str], ...]:
         relevant_kinds = {
             ArtifactKind.CONVERSATION_CONTEXT,
+            ArtifactKind.SKILL_CONTEXT,
             ArtifactKind.QUERY_CONSTRAINTS,
             ArtifactKind.RECIPE_EVIDENCE,
             ArtifactKind.RECIPE_CANDIDATES,
