@@ -60,6 +60,7 @@ class BadCaseService:
                 "session_id": request.session_id,
                 "tone_signal": request.tone_signal.model_dump(mode="json"),
                 "trace": request.trace_snapshot,
+                "feedback": request.feedback_snapshot,
                 "hard_constraint_violations": list(
                     request.hard_constraint_violations
                 ),
@@ -86,6 +87,9 @@ class BadCaseService:
                     score=score,
                     triggers=triggers,
                     snapshot=snapshot,
+                    increment_occurrence=(
+                        candidate.latest_run_id != request.run_id
+                    ),
                 )
             return BadCaseEvaluationResult(
                 status=BadCaseStatus.PENDING_REVIEW,

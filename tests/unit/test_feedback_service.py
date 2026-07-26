@@ -6,6 +6,8 @@ from sqlalchemy.pool import StaticPool
 
 from recipe_assistant.core.database import Base, create_session_factory, session_scope
 from recipe_assistant.models.agent_trace import AgentRunTrace
+from recipe_assistant.models.bad_case import BadCaseCandidate
+from recipe_assistant.models.bad_case_review import BadCaseReview
 from recipe_assistant.models.interaction_feedback import InteractionFeedback
 from recipe_assistant.models.message import ChatMessage, MessageRole
 from recipe_assistant.models.recipe_interaction import RecipeInteraction
@@ -66,6 +68,8 @@ def _seed(factory) -> dict[str, int | str]:
             route="SIMPLE",
             original_input="question",
             normalized_input="question",
+            events_json=[{"type": "route", "route": "SIMPLE"}],
+            sources_json=[{"recipeName": "test recipe"}],
         )
         foreign_trace = AgentRunTrace(
             run_id="run-other-session",
@@ -165,3 +169,62 @@ def test_recipe_preference_contract_is_distinct_from_answer_feedback() -> None:
     assert recipe_event.event_type.value == "DISLIKE_RECIPE"
     with pytest.raises(ValueError):
         RecipePreferenceEventRequest(recipe_id="recipe-42", event_type="DISLIKE")
+
+
+def test_dislike_reads_trace_and_creates_one_pending_review_bad_case() -> None:
+    factory = _factory()
+    ids = _seed(factory)
+    request = AnswerFeedbackRequest(
+        run_id=str(ids["run_id"]),
+        message_id=int(ids["message_id"]),
+        rating="DISLIKE",
+        reason_tags=[FeedbackReasonTag.INCORRECT],
+        comment="The answer contradicts the recipe source.",
+    )
+    service = FeedbackService(factory)
+
+    service.submit(int(ids["user_id"]), request)
+    service.submit(int(ids["user_id"]), request)
+
+    with session_scope(factory) as session:
+        candidates = list(session.scalars(select(BadCaseCandidate)))
+        reviews = list(session.scalars(select(BadCaseReview)))
+
+    assert len(candidates) == 1
+    candidate = candidates[0]
+    assert candidate.status == "PENDING_REVIEW"
+    assert candidate.latest_run_id == ids["run_id"]
+    assert candidate.occurrence_count == 1
+    assert candidate.trigger_types_json == ["EXPLICIT_DISLIKE"]
+    assert candidate.snapshot_json["trace"]["events"] == [
+        {"type": "route", "route": "SIMPLE"}
+    ]
+    assert candidate.snapshot_json["trace"]["sources"] == [
+        {"recipeName": "test recipe"}
+    ]
+    assert candidate.snapshot_json["feedback"] == {
+        "feedback_id": 1,
+        "message_id": ids["message_id"],
+        "rating": "DISLIKE",
+        "reason_tags": ["INCORRECT"],
+        "comment": "The answer contradicts the recipe source.",
+        "assistant_answer": "answer",
+    }
+    assert reviews == []
+
+
+def test_like_does_not_create_bad_case_candidate() -> None:
+    factory = _factory()
+    ids = _seed(factory)
+
+    FeedbackService(factory).submit(
+        int(ids["user_id"]),
+        AnswerFeedbackRequest(
+            run_id=str(ids["run_id"]),
+            message_id=int(ids["message_id"]),
+            rating="LIKE",
+        ),
+    )
+
+    with session_scope(factory) as session:
+        assert session.scalar(select(func.count(BadCaseCandidate.id))) == 0

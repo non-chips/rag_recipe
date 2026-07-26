@@ -90,6 +90,18 @@ powershell.exe -ExecutionPolicy Bypass -File scripts\inspect_diagnostics.ps1 `
 
 该脚本以只读方式访问 SQLite，不要求 FastAPI 正在运行。
 
+### 负反馈与 Bad Case 审批闭环
+
+用户通过 `POST /api/feedback` 提交 `DISLIKE` 后，`FeedbackService` 会读取
+同一用户、会话和 run 对应的完整 Trace，并将 Trace、助手回答、反馈原因及
+评论固化为一个 `PENDING_REVIEW` Bad Case 候选。同一 run 的重复反馈只更新
+候选快照，不增加 occurrence；`LIKE` 不创建候选。
+
+候选不会自动批准或进入回归数据集。开发者配置 `ADMIN_API_TOKEN` 后，使用
+`GET /api/admin/bad-cases?status=PENDING_REVIEW` 查看待审候选，并通过
+`POST /api/admin/bad-cases/{id}/approve`、`reject` 或 `merge` 完成显式审批。
+所有审批操作都会写入追加式审计记录。
+
 ## 迁移与数据保护
 
 - 当前架构：`docs/current_architecture.md`

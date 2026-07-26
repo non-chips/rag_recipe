@@ -17,7 +17,13 @@ from recipe_assistant.core.database import (
     create_session_factory,
     session_scope,
 )
-from recipe_assistant.models import AgentRunTrace, ChatMessage, MessageRole
+from recipe_assistant.models import (
+    AgentRunTrace,
+    ChatMessage,
+    MessageRole,
+)
+from recipe_assistant.models.bad_case import BadCaseCandidate
+from recipe_assistant.models.implicit_feedback_signal import ImplicitFeedbackSignal
 from recipe_assistant.repositories import (
     SqlAlchemyProfileRepository,
     SqlAlchemyTraceRepository,
@@ -171,5 +177,53 @@ def test_new_session_does_not_inherit_another_sessions_history() -> None:
 
     assert first.session_public_id != second.session_public_id
     assert second.outcome.context.history == []
+
+    engine.dispose()
+
+
+def test_normal_chat_flow_analyzes_tone_and_submits_bad_case_signals() -> None:
+    engine, factory, _executor, service = _build_service()
+    with session_scope(factory) as session:
+        user_id = SqlAlchemyUserRepository(session).create(
+            "tone-flow-user",
+            "hash",
+        ).id
+
+    first = service.run(
+        ChatRequest(user_id=user_id, message="请推荐一道适合晚餐的菜")
+    )
+    second = service.run(
+        ChatRequest(
+            user_id=user_id,
+            message="回答错了，请重新回答",
+            session_public_id=first.session_public_id,
+        )
+    )
+
+    with session_scope(factory) as session:
+        trace = session.scalar(
+            select(AgentRunTrace).where(AgentRunTrace.run_id == second.run_id)
+        )
+        assert trace is not None
+        tone_events = [
+            event
+            for event in trace.events_json
+            if event.get("event_type") == "TONE_ANALYZED"
+        ]
+        assert len(tone_events) == 1
+        tone = tone_events[0]["metadata"]
+        assert tone["requested_retry"] is True
+        assert tone["explicit_error_reported"] is True
+        assert tone["possible_dissatisfaction"] > 0.7
+
+        signal_types = set(
+            session.scalars(select(ImplicitFeedbackSignal.signal_type))
+        )
+        assert "REQUESTED_RETRY" in signal_types
+        assert "POSSIBLE_DISSATISFACTION" in signal_types
+        candidate = session.scalar(select(BadCaseCandidate))
+        assert candidate is not None
+        assert candidate.latest_run_id == second.run_id
+        assert "EXPLICIT_ERROR" in candidate.trigger_types_json
 
     engine.dispose()

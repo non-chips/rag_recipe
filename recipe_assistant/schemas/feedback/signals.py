@@ -82,6 +82,7 @@ class BadCaseEvaluationRequest(FeedbackSignalSchema):
     empty_retrieval: bool = False
     hard_constraint_violations: tuple[str, ...] = Field(default=(), max_length=50)
     trace_snapshot: dict[str, JsonValue] = Field(default_factory=dict)
+    feedback_snapshot: dict[str, JsonValue] = Field(default_factory=dict)
 
 
 class BadCaseEvaluationResult(FeedbackSignalSchema):

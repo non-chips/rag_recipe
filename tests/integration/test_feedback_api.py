@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.pool import StaticPool
 
 from recipe_assistant.api.application import ApiApplicationService
@@ -10,6 +10,7 @@ from recipe_assistant.api.feedback import router as feedback_router
 from recipe_assistant.core.database import Base, create_session_factory, session_scope
 from recipe_assistant.main import create_app
 from recipe_assistant.models.agent_trace import AgentRunTrace
+from recipe_assistant.models.bad_case import BadCaseCandidate
 from recipe_assistant.models.message import ChatMessage, MessageRole
 from recipe_assistant.models.session import ChatSession
 from recipe_assistant.models.user import UserAccount
@@ -21,7 +22,7 @@ class _UnusedChatRunner:
         raise AssertionError(f"unexpected chat request: {request}")
 
 
-def _build_client() -> tuple[TestClient, dict[str, int | str]]:
+def _build_client():
     engine = create_engine(
         "sqlite://",
         connect_args={"check_same_thread": False},
@@ -50,6 +51,7 @@ def _build_client() -> tuple[TestClient, dict[str, int | str]]:
             route="SIMPLE",
             original_input="question",
             normalized_input="question",
+            events_json=[{"type": "route", "route": "SIMPLE"}],
         )
         session.add_all([message, trace])
         session.flush()
@@ -67,11 +69,11 @@ def _build_client() -> tuple[TestClient, dict[str, int | str]]:
     )
     application = create_app(lambda: container)
     application.include_router(feedback_router)
-    return TestClient(application), ids
+    return TestClient(application), ids, factory
 
 
 def test_feedback_api_submits_recovers_and_updates_idempotently() -> None:
-    client, ids = _build_client()
+    client, ids, factory = _build_client()
     headers = {"X-User-Id": str(ids["owner_id"])}
     payload = {
         "run_id": ids["run_id"],
@@ -86,16 +88,21 @@ def test_feedback_api_submits_recovers_and_updates_idempotently() -> None:
         recovered = client.get(
             f"/api/feedback/{ids['message_id']}", headers=headers
         )
+        with session_scope(factory) as session:
+            candidate = session.scalar(select(BadCaseCandidate))
 
     assert first.status_code == 200
     assert repeated.status_code == 200
     assert recovered.status_code == 200
     assert first.json()["id"] == repeated.json()["id"] == recovered.json()["id"]
     assert recovered.json()["reason_tags"] == ["IRRELEVANT", "TOO_VERBOSE"]
+    assert candidate is not None
+    assert candidate.status == "PENDING_REVIEW"
+    assert candidate.latest_run_id == ids["run_id"]
 
 
 def test_feedback_api_rejects_foreign_user_and_invalid_tags() -> None:
-    client, ids = _build_client()
+    client, ids, _factory = _build_client()
     payload = {
         "run_id": ids["run_id"],
         "message_id": ids["message_id"],

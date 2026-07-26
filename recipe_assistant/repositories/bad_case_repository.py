@@ -93,6 +93,7 @@ class BadCaseRepository:
         score: float,
         triggers: list[str],
         snapshot: dict,
+        increment_occurrence: bool = True,
     ) -> BadCaseCandidate:
         candidate.latest_run_id = run_id
         candidate.score = max(candidate.score, score)
@@ -100,7 +101,8 @@ class BadCaseRepository:
             set(candidate.trigger_types_json) | set(triggers)
         )
         candidate.snapshot_json = dict(snapshot)
-        candidate.occurrence_count += 1
+        if increment_occurrence:
+            candidate.occurrence_count += 1
         candidate.updated_at = utc_now()
         self.session.flush()
         return candidate
